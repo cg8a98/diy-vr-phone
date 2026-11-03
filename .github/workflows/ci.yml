@@ -74,7 +74,7 @@ jobs:
         with:
           projectPath: app
           targetPlatform: Android
-          androidExportType: apk
+          androidExportType: androidPackage
           buildMethod: DiyVr.EditorTools.CiBuild.BuildAndroid
           buildName: diy-vr
           versioning: None
