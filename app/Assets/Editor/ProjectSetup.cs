@@ -17,7 +17,6 @@ namespace DiyVr.EditorTools
     public static class ProjectSetup
     {
         private const string ArCoreLoader = "UnityEngine.XR.ARCore.ARCoreLoader";
-        private const string ArCoreSettingsType = "UnityEngine.XR.ARCore.ARCoreSettings, Unity.XR.ARCore";
 
         [InitializeOnLoadMethod]
         private static void OnLoad()
@@ -59,13 +58,24 @@ namespace DiyVr.EditorTools
 
         private static void ConfigureArCoreSettings()
         {
-            var type = Type.GetType(ArCoreSettingsType, true);
-            var settings = type.GetMethod("GetOrCreateSettings",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)?.Invoke(null, null) as UnityEngine.Object;
+            // ARCoreSettings lives in a package editor assembly; find the asset by type name instead of
+            // reflecting a type path. Assigning the loader already creates it under Assets/XR/Settings.
+            UnityEngine.Object settings = null;
+            foreach (var guid in AssetDatabase.FindAssets("t:ARCoreSettings"))
+            {
+                settings = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(guid));
+                if (settings != null) break;
+            }
             if (settings == null)
-                throw new InvalidOperationException("ARCoreSettings.GetOrCreateSettings unavailable");
+                throw new InvalidOperationException("No ARCoreSettings asset found");
 
             var so = new SerializedObject(settings);
+            var names = new System.Text.StringBuilder();
+            var it = so.GetIterator();
+            for (bool next = it.NextVisible(true); next; next = it.NextVisible(false))
+                names.Append(it.propertyPath).Append(',');
+            Debug.Log("ARCoreSettings fields: " + names);
+
             SetEnum(so, "m_Requirement", 0); // Required
             SetEnum(so, "m_Depth", 1);       // Optional
             so.ApplyModifiedPropertiesWithoutUndo();
