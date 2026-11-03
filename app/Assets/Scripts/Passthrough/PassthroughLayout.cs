@@ -5,6 +5,22 @@ namespace DiyVr.Passthrough
     /// <summary>Pure geometry for placing the camera image in front of an eye camera.</summary>
     public static class PassthroughLayout
     {
+        /// <summary>Layer of the left eye's image quad. (Layer 31 is the stereo compositor's.)</summary>
+        public const int LeftLayer = 29;
+        /// <summary>Layer of the right eye's image quad.</summary>
+        public const int RightLayer = 30;
+
+        /// <summary>
+        /// Culling mask for an eye camera: the base mask minus the OTHER eye's quad layer, so each eye only
+        /// ever sees its own passthrough quad (the quads sit close to the eyes, which are only 6 cm apart).
+        /// </summary>
+        public static int EyeCullingMask(int baseMask, bool leftEye)
+        {
+            int own = 1 << (leftEye ? LeftLayer : RightLayer);
+            int other = 1 << (leftEye ? RightLayer : LeftLayer);
+            return (baseMask | own) & ~other;
+        }
+
         /// <summary>
         /// Corners (bottom-left, bottom-right, top-right, top-left) in the eye camera's local space of the
         /// rectangle that exactly fills the eye frustum at <paramref name="distance"/> metres in front of it.

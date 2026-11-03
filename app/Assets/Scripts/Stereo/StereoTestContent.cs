@@ -4,7 +4,8 @@ namespace DiyVr.Stereo
 {
     /// <summary>
     /// Builds the stereo test content at start: a procedural line grid (to judge distortion; straight lines
-    /// must look straight at the edges) and a 0.2 m cube exactly 1 m in front of the rig.
+    /// must look straight at the edges) and a 0.2 m cube 1 m in front of the starting pose.
+    /// The grid is head-locked; the cube is fixed in the world.
     /// </summary>
     public sealed class StereoTestContent : MonoBehaviour
     {
@@ -42,20 +43,49 @@ namespace DiyVr.Stereo
 
         private void BuildCube(Shader shader)
         {
+            CreateCube(shader, head, cubeDistance, cubeSize);
+        }
+
+        /// <summary>
+        /// World-space spot for the cube: <paramref name="distance"/> metres ahead of the head, along its forward
+        /// direction flattened onto the horizontal plane (so it is not up in the ceiling if the phone starts tilted).
+        /// </summary>
+        public static Vector3 CubeWorldPosition(Vector3 headPosition, Quaternion headRotation, float distance)
+        {
+            Vector3 fwd = headRotation * Vector3.forward;
+            fwd.y = 0f;
+            if (fwd.sqrMagnitude < 1e-6f) fwd = Vector3.forward; // looking straight up or down
+            return headPosition + fwd.normalized * distance;
+        }
+
+        /// <summary>
+        /// Creates the test cube fixed in the world (NOT parented to the head, so it stays still while the phone moves).
+        /// The AR origin starts at the device pose, so the rig's pose at start is the room-anchored starting pose.
+        /// </summary>
+        public static GameObject CreateCube(Shader shader, Transform head, float distance, float size)
+        {
             var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = "TestCube";
             DestroyCollider(cube);
-            cube.transform.SetParent(head, false);
-            cube.transform.localPosition = new Vector3(0f, 0f, cubeDistance);
-            cube.transform.localScale = Vector3.one * cubeSize;
-            var mat = new Material(shader) { mainTexture = MakeCheckerTexture(64, 8), color = new Color(1f, 0.6f, 0.2f) };
-            cube.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            Vector3 pos = head != null ? head.position : Vector3.zero;
+            Quaternion rot = head != null ? head.rotation : Quaternion.identity;
+            cube.transform.SetParent(null, false);
+            cube.transform.SetPositionAndRotation(CubeWorldPosition(pos, rot, distance),
+                Quaternion.Euler(0f, rot.eulerAngles.y, 0f));
+            cube.transform.localScale = Vector3.one * size;
+            if (shader != null)
+            {
+                var mat = new Material(shader) { mainTexture = MakeCheckerTexture(64, 8), color = new Color(1f, 0.6f, 0.2f) };
+                cube.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            }
+            return cube;
         }
 
         private static void DestroyCollider(GameObject go)
         {
             var c = go.GetComponent<Collider>();
-            if (c != null) Destroy(c);
+            if (c == null) return;
+            if (Application.isPlaying) Destroy(c); else DestroyImmediate(c);
         }
 
         /// <summary>White lines on dark blue every <c>cells</c> pixels' worth; centre lines red; border green.</summary>

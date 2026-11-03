@@ -152,14 +152,14 @@ namespace DiyVr.Passthrough
                 _material = new Material(shader) { name = "PassthroughMat" };
             }
             _material.mainTexture = _image;
-            Ensure(_rig.LeftEye, ref _leftBuiltFor, ref _leftProj, ref _leftQuad, ref _leftMesh, "PassthroughLeft");
-            Ensure(_rig.RightEye, ref _rightBuiltFor, ref _rightProj, ref _rightQuad, ref _rightMesh, "PassthroughRight");
+            Ensure(_rig.LeftEye, true, ref _leftBuiltFor, ref _leftProj, ref _leftQuad, ref _leftMesh, "PassthroughLeft");
+            Ensure(_rig.RightEye, false, ref _rightBuiltFor, ref _rightProj, ref _rightQuad, ref _rightMesh, "PassthroughRight");
             if (_leftQuad != null) _leftQuad.SetActive(true);
             if (_rightQuad != null) _rightQuad.SetActive(true);
         }
 
         // (Re)builds the quad when the eye camera was replaced (StereoRig.Rebuild) or its projection changed.
-        private void Ensure(Camera eye, ref Camera builtFor, ref Matrix4x4 proj, ref GameObject quad, ref Mesh mesh, string name)
+        private void Ensure(Camera eye, bool left, ref Camera builtFor, ref Matrix4x4 proj, ref GameObject quad, ref Mesh mesh, string name)
         {
             if (quad != null && builtFor == eye && proj == eye.projectionMatrix) return;
             if (quad != null) Destroy(quad);
@@ -179,7 +179,9 @@ namespace DiyVr.Passthrough
             mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
             mesh.RecalculateBounds();
 
-            quad = new GameObject(name);
+            quad = new GameObject(name) { layer = left ? PassthroughLayout.LeftLayer : PassthroughLayout.RightLayer };
+            // Each eye must not see the other eye's quad (that was the doubled image in the right eye).
+            eye.cullingMask = PassthroughLayout.EyeCullingMask(eye.cullingMask, left);
             quad.transform.SetParent(eye.transform, false);
             quad.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = quad.AddComponent<MeshRenderer>();

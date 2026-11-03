@@ -24,6 +24,8 @@ namespace DiyVr.Diagnostics
 
         private string _thermalLabel = ThermalStatusReader.UnavailableLabel;
         private float _nextThermalPoll;
+        private ARCameraManager _cameraManager;
+        private string _cameraLabel = "n/a";
         private string _text = string.Empty;
         private GUIStyle _style;
 
@@ -60,9 +62,22 @@ namespace DiyVr.Diagnostics
             {
                 _nextThermalPoll = Time.unscaledTime + thermalPollSeconds;
                 _thermalLabel = _thermal.ReadLabel();
+                _cameraLabel = ReadCameraLabel();
             }
 
             _text = BuildText();
+        }
+
+        // Current ARCore camera configuration, e.g. "60 fps 1920x1080". The camera rate can differ from the app FPS.
+        private string ReadCameraLabel()
+        {
+            if (_cameraManager == null) _cameraManager = FindFirstObjectByType<ARCameraManager>();
+            if (_cameraManager == null) return "n/a";
+            var cfg = _cameraManager.currentConfiguration;
+            if (!cfg.HasValue) return "n/a";
+            object fps = cfg.Value.framerate; // int? in AR Foundation; boxing keeps this compile-safe
+            string rate = fps is int ? ((int)fps).ToString() + " fps" : "? fps";
+            return rate + " " + cfg.Value.width + "x" + cfg.Value.height;
         }
 
         private void PollToggleGesture()
@@ -94,6 +109,7 @@ namespace DiyVr.Diagnostics
             if (ARSession.state == ARSessionState.SessionInitializing || ARSession.state == ARSessionState.SessionTracking)
                 _sb.Append(" / ").Append(ARSession.notTrackingReason);
             _sb.Append('\n');
+            _sb.Append("Camera ").Append(_cameraLabel).Append('\n');
             _sb.Append("Thermal ").Append(_thermalLabel).Append('\n');
             _sb.Append("Build ").Append(Application.version);
             return _sb.ToString();
