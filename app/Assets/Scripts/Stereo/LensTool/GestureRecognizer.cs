@@ -47,7 +47,8 @@ namespace DiyVr.Stereo.LensTool
                 var result = GestureKind.None;
                 if (!_moved && !_longFired)
                 {
-                    if (_maxCount >= 2) { if (dur <= TwoFingerTapMaxSeconds) result = GestureKind.TwoFingerTap; }
+                    if (_maxCount >= 3) { /* three or more fingers belong to the debug overlay, not the lens tool */ }
+                    else if (_maxCount == 2) { if (dur <= TwoFingerTapMaxSeconds) result = GestureKind.TwoFingerTap; }
                     else if (dur <= TapMaxSeconds) result = _startX < _w * 0.5f ? GestureKind.TapLeft : GestureKind.TapRight;
                 }
                 return result;

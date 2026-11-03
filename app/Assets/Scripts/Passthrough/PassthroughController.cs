@@ -1,3 +1,4 @@
+using DiyVr.Core;
 using DiyVr.Stereo;
 using DiyVr.Tracking;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine.XR.ARFoundation;
 namespace DiyVr.Passthrough
 {
     /// <summary>
-    /// Shows the ARCore camera image in both eyes: on a double tap (outside the top-left overlay corner), through
+    /// Shows the ARCore camera image in both eyes: on a double tap anywhere (routed by GestureArbiter), through
     /// <see cref="Toggle"/>, and automatically while HeadPoseDriver reports tracking lost.
     /// How: an ARCameraBackground is added to the AR camera (only enabled while visible). Each frame its material is
     /// blitted into a RenderTexture, and a quad that fills each eye's frustum, just in front of the eye camera, shows it.
@@ -91,13 +92,14 @@ namespace DiyVr.Passthrough
             if (ts == null) return;
             int down = 0;
             for (int i = 0; i < ts.touches.Count; i++) if (ts.touches[i].press.isPressed) down++;
-            if (down > 1) { tapDetector.Cancel(); return; }
+            if (down > 1 || GestureArbiter.Shared.LensToolOpen) { tapDetector.Cancel(); return; }
 
             var touch = ts.primaryTouch;
             if (touch.press.wasPressedThisFrame)
-                tapDetector.OnPress(Time.unscaledTimeAsDouble, touch.position.ReadValue(), Screen.width, Screen.height);
+                tapDetector.OnPress(Time.unscaledTimeAsDouble, touch.position.ReadValue());
             if (touch.press.wasReleasedThisFrame
-                && tapDetector.OnRelease(Time.unscaledTimeAsDouble, touch.position.ReadValue()))
+                && tapDetector.OnRelease(Time.unscaledTimeAsDouble, touch.position.ReadValue())
+                && GestureArbiter.Shared.Allows(GestureTarget.Passthrough, TouchGesture.DoubleTap))
                 _state.Toggle();
         }
 

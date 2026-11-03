@@ -33,6 +33,7 @@ namespace DiyVr.EditorTools
             EnableArCoreLoader();
             ConfigureArCoreSettings();
             UpgradeUrpAsset();
+            EnsureArBackgroundFeature();
             // ARCore's build step rejects Vulkan, so Android uses OpenGLES3 only.
             PlayerSettings.SetUseDefaultGraphicsAPIs(UnityEditor.BuildTarget.Android, false);
             PlayerSettings.SetGraphicsAPIs(UnityEditor.BuildTarget.Android,
@@ -63,6 +64,44 @@ namespace DiyVr.EditorTools
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(asset);
             }
+        }
+
+        // Passthrough turns on an ARCameraBackground, and under URP that component draws only when the renderer has
+        // ARBackgroundRendererFeature. Add it to the renderer asset if missing. The feature only acts on cameras that
+        // have an enabled ARCameraBackground, which exists only while passthrough is shown. Idempotent.
+        private const string RendererAssetPath = "Assets/Settings/MobileURP_Renderer.asset";
+
+        private static void EnsureArBackgroundFeature()
+        {
+            var featureType = Type.GetType("UnityEngine.XR.ARFoundation.ARBackgroundRendererFeature, Unity.XR.ARFoundation");
+            if (featureType == null) { Debug.LogWarning("ARBackgroundRendererFeature type not found"); return; }
+            var renderer = AssetDatabase.LoadMainAssetAtPath(RendererAssetPath);
+            if (renderer == null) { Debug.LogWarning("URP renderer asset not found at " + RendererAssetPath); return; }
+
+            var so = new SerializedObject(renderer);
+            var features = so.FindProperty("m_RendererFeatures");
+            var map = so.FindProperty("m_RendererFeatureMap");
+            if (features == null || map == null) { Debug.LogWarning("URP renderer feature lists not found"); return; }
+            for (int i = 0; i < features.arraySize; i++)
+            {
+                var existing = features.GetArrayElementAtIndex(i).objectReferenceValue;
+                if (existing != null && featureType.IsInstanceOfType(existing)) return;
+            }
+
+            var feature = ScriptableObject.CreateInstance(featureType);
+            feature.name = "ARBackgroundRendererFeature";
+            AssetDatabase.AddObjectToAsset(feature, renderer);
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(feature, out string _, out long localId))
+                throw new InvalidOperationException("Could not read the file id of the new renderer feature");
+
+            features.arraySize++;
+            features.GetArrayElementAtIndex(features.arraySize - 1).objectReferenceValue = feature;
+            map.arraySize++;
+            map.GetArrayElementAtIndex(map.arraySize - 1).longValue = localId;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(renderer);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Added ARBackgroundRendererFeature to " + RendererAssetPath);
         }
 
         private static void EnableArCoreLoader()

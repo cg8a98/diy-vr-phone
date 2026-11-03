@@ -1,0 +1,20 @@
+{
+    "name": "DiyVr.App",
+    "rootNamespace": "DiyVr.App",
+    "references": [
+        "DiyVr.Runtime",
+        "DiyVr.Tracking",
+        "DiyVr.Debug",
+        "DiyVr.Passthrough",
+        "DiyVr.LensTool"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

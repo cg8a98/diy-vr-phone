@@ -2,6 +2,7 @@
     "name": "DiyVr.Debug",
     "rootNamespace": "DiyVr.Diagnostics",
     "references": [
+        "DiyVr.Runtime",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
         "Unity.InputSystem"

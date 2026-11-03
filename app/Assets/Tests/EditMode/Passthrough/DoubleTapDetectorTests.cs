@@ -6,12 +6,11 @@ namespace DiyVr.Tests
 {
     public class DoubleTapDetectorTests
     {
-        private const int W = 2316, H = 1080;
         private static readonly Vector2 Centre = new Vector2(1000f, 500f);
 
         private static bool Tap(DoubleTapDetector d, double t, Vector2 pos, double hold = 0.08)
         {
-            d.OnPress(t, pos, W, H);
+            d.OnPress(t, pos);
             return d.OnRelease(t + hold, pos);
         }
 
@@ -51,7 +50,7 @@ namespace DiyVr.Tests
         {
             var d = new DoubleTapDetector();
             Tap(d, 0.0, Centre);
-            d.OnPress(0.2, Centre, W, H);
+            d.OnPress(0.2, Centre);
             Assert.IsFalse(d.OnRelease(0.25, Centre + new Vector2(200f, 0f)));
         }
 
@@ -64,21 +63,13 @@ namespace DiyVr.Tests
         }
 
         [Test]
-        public void TapsInOverlayCorner_AreIgnored()
+        public void DoubleTapInTopLeftCorner_Fires()
         {
+            // The old overlay-corner exclusion is gone: a double tap works anywhere.
             var d = new DoubleTapDetector();
-            var corner = new Vector2(50f, H - 50f);
+            var corner = new Vector2(50f, 1030f);
             Assert.IsFalse(Tap(d, 0.0, corner));
-            Assert.IsFalse(Tap(d, 0.2, corner));
-        }
-
-        [Test]
-        public void CornerTap_BreaksASequence()
-        {
-            var d = new DoubleTapDetector();
-            Tap(d, 0.0, Centre);
-            Tap(d, 0.1, new Vector2(50f, H - 50f));
-            Assert.IsFalse(Tap(d, 0.2, Centre));
+            Assert.IsTrue(Tap(d, 0.2, corner));
         }
 
         [Test]
@@ -97,16 +88,6 @@ namespace DiyVr.Tests
             Tap(d, 0.0, Centre);
             d.Cancel();
             Assert.IsFalse(Tap(d, 0.2, Centre));
-        }
-
-        [Test]
-        public void OverlayCorner_Geometry()
-        {
-            // side = min(2316,1080) * 0.25 = 270; top-left means large y (origin bottom-left).
-            Assert.IsTrue(DoubleTapDetector.IsInOverlayCorner(new Vector2(10f, H - 10f), W, H, 0.25f));
-            Assert.IsFalse(DoubleTapDetector.IsInOverlayCorner(new Vector2(10f, 10f), W, H, 0.25f));
-            Assert.IsFalse(DoubleTapDetector.IsInOverlayCorner(new Vector2(W - 10f, H - 10f), W, H, 0.25f));
-            Assert.IsFalse(DoubleTapDetector.IsInOverlayCorner(new Vector2(300f, H - 10f), W, H, 0.25f));
         }
     }
 }

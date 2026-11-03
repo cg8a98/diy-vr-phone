@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using DiyVr.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -74,6 +75,7 @@ namespace DiyVr.Stereo.LensTool
 
         private void OnDestroy()
         {
+            if (_open) GestureArbiter.Shared.LensToolOpen = false;
             if (_working != null) Destroy(_working);
             if (_panel != null) Destroy(_panel);
             if (_grid != null) Destroy(_grid);
@@ -84,7 +86,11 @@ namespace DiyVr.Stereo.LensTool
             if (_gestures == null) return;
             _gestures.Resize(Screen.width, Screen.height);
             var g = _gestures.Update(ReadTouch());
-            if (g == GestureKind.TwoFingerTap) { if (_open) Close(); else Open(); return; }
+            if (g == GestureKind.TwoFingerTap)
+            {
+                if (GestureArbiter.Shared.Allows(GestureTarget.LensTool, TouchGesture.TwoFingerTap)) { if (_open) Close(); else Open(); }
+                return;
+            }
             if (!_open) return;
             switch (g)
             {
@@ -127,6 +133,7 @@ namespace DiyVr.Stereo.LensTool
         {
             if (_working == null) return;
             _open = true;
+            GestureArbiter.Shared.LensToolOpen = true;
             EnsurePanel();
             _panel.SetActive(true);
             _grid.SetActive(true);
@@ -137,6 +144,7 @@ namespace DiyVr.Stereo.LensTool
         public void Close()
         {
             _open = false;
+            GestureArbiter.Shared.LensToolOpen = false;
             if (_panel != null) _panel.SetActive(false);
             if (_grid != null) _grid.SetActive(false);
         }

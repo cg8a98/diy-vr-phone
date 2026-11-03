@@ -334,6 +334,16 @@ namespace DiyVr.Tests
         }
 
         [Test]
+        public void ThreeFingerTap_IsNotATwoFingerTap()
+        {
+            // Three fingers belong to the debug overlay; the lens tool must ignore them.
+            var g = new GestureRecognizer(W, H);
+            g.Update(F(0f, 1, 800, 700));
+            g.Update(F(0.05f, 3, 800, 700));
+            Assert.AreEqual(GestureKind.None, g.Update(F(0.2f, 0, 0, 0)));
+        }
+
+        [Test]
         public void TwoFingers_DoNotStepOrLongPress()
         {
             var g = new GestureRecognizer(W, H);
