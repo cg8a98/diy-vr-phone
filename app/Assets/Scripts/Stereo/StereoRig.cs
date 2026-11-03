@@ -40,7 +40,6 @@ namespace DiyVr.Stereo
             }
         }
 
-<<<<<<< HEAD
         /// <summary>The profile currently in use (the assigned one, or the built-in default).</summary>
         public LensProfile ActiveProfile { get { return Active; } }
 
@@ -51,8 +50,6 @@ namespace DiyVr.Stereo
             if (isActiveAndEnabled) Rebuild();
         }
 
-=======
->>>>>>> origin/main
         /// <summary>Changes eye spacing (metres) and rebuilds the rig.</summary>
         public void SetIpd(float metres)
         {
