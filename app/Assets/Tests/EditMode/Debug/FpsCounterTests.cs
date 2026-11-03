@@ -43,7 +43,8 @@ namespace DiyVr.Tests.Diagnostics
         {
             var c = new FpsCounter(0.5f);
             for (int i = 0; i < 4; i++) c.AddFrame(0.125f);   // 8 fps
-            for (int i = 0; i < 50; i++) c.AddFrame(0.01f);   // 100 fps
+            // 60 frames, not 50: float sums of 0.01 can land just under 0.5 s, so the window closes on frame 50 or 51.
+            for (int i = 0; i < 60; i++) c.AddFrame(0.01f);   // 100 fps
             Assert.AreEqual(100f, c.Fps, 0.5f);
         }
 
