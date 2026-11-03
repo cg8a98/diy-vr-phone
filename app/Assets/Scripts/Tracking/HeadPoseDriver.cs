@@ -30,6 +30,8 @@ namespace DiyVr.Tracking
 
         /// <summary>Tracker access for the debug overlay (1.7) and passthrough (1.8).</summary>
         public HeadPoseTracker Tracker { get { return _tracker; } }
+        /// <summary>The AR camera (pose source). Null until enabled. Passthrough (1.8) attaches the camera background to it.</summary>
+        public Camera ArCamera { get { return _arCamera; } }
         /// <summary>True while ARCore tracks well. False means the pose is being held.</summary>
         public bool IsTracking { get { return _tracker != null && _tracker.IsTracking; } }
         /// <summary>Raised on loss (false) and recovery (true).</summary>
