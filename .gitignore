@@ -24,6 +24,8 @@ private/
 *.spz
 *.keystore
 *.jks
+*.p12
+*.pfx
 
 # Unity (app/)
 app/[Ll]ibrary/
