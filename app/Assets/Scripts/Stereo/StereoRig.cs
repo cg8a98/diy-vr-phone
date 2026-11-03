@@ -40,6 +40,16 @@ namespace DiyVr.Stereo
             }
         }
 
+        /// <summary>The profile currently in use (the assigned one, or the built-in default).</summary>
+        public LensProfile ActiveProfile { get { return Active; } }
+
+        /// <summary>Switches to another profile object and rebuilds the distortion immediately (used by the lens tool).</summary>
+        public void ApplyProfile(LensProfile newProfile)
+        {
+            profile = newProfile;
+            if (isActiveAndEnabled) Rebuild();
+        }
+
         /// <summary>Changes eye spacing (metres) and rebuilds the rig.</summary>
         public void SetIpd(float metres)
         {
