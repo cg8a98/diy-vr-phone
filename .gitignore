@@ -15,3 +15,12 @@ bin/
 obj/
 *.log
 .env
+
+# Private data - never commit (room scans, measurements, keys)
+private/
+*.glb
+*.obj
+*.ply
+*.spz
+*.keystore
+*.jks
