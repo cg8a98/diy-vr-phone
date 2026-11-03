@@ -4,6 +4,7 @@ One line each, newest first. Only decisions that change future work.
 
 | Date | Decision | Why | Decided by |
 |---|---|---|---|
+| 2026-11-03 | Reuse Google Cardboard SDK distortion maths (googlevr/cardboard, Apache License 2.0 for the SDK files; only its third_party/unity_plugin_api folder differs and is not used; keep attribution in CardboardDistortion.cs) | Proven lens model for the stereo rig (1.4); no code copied verbatim, formulas re-implemented in C# | Claude (builder, ticket 1.4) |
 | 2026-11-03 | Start build before test headset arrives; headset-dependent tickets (lens tuning, comfort) wait | Most of milestone 1 is testable handheld | Carlos |
 | 2026-11-03 | No in-app auto-updater until repo is public; manual APK install from GitHub releases; consistent signing key from day one | Private repo can't serve releases without embedding a secret | Carlos |
 | 2026-11-03 | Private data (room scans, measurements, budget, test content, key backup) never in git; phone app storage + PC `private\` folder outside the clone | Repo may go public later | Carlos |
