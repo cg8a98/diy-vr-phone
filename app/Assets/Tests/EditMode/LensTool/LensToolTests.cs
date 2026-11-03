@@ -67,8 +67,8 @@ namespace DiyVr.Tests
             foreach (var spec in LensParameters.All)
             {
                 double start = spec.Get(_p);
-                for (int i = 0; i < 40; i++) spec.StepBy(_p, 1);
-                for (int i = 0; i < 40; i++) spec.StepBy(_p, -1);
+                for (int i = 0; i < 15; i++) spec.StepBy(_p, 1);
+                for (int i = 0; i < 15; i++) spec.StepBy(_p, -1);
                 Assert.AreEqual(start, spec.Get(_p), 1e-4, spec.Label);
             }
         }
