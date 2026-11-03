@@ -70,6 +70,29 @@ jobs:
           key: Library-Android-${{ hashFiles('app/Assets/**', 'app/Packages/**', 'app/ProjectSettings/**') }}
           restore-keys: |
             Library-Android-
+      - name: Work out version
+        id: ver
+        run: |
+          VERSION="$(tr -d ' \r\n' < VERSION).${{ github.run_number }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version $VERSION, version code ${{ github.run_number }}"
+      - name: Check release signing secrets (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          S1: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          S2: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          S3: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          S4: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+        run: |
+          fail=0
+          [ -n "$S1" ] || { echo "::error::Secret ANDROID_KEYSTORE_BASE64 is missing"; fail=1; }
+          [ -n "$S2" ] || { echo "::error::Secret ANDROID_KEYSTORE_PASS is missing"; fail=1; }
+          [ -n "$S3" ] || { echo "::error::Secret ANDROID_KEYALIAS_NAME is missing"; fail=1; }
+          [ -n "$S4" ] || { echo "::error::Secret ANDROID_KEYALIAS_PASS is missing"; fail=1; }
+          if [ "$fail" = 1 ]; then
+            echo "::error::Release signing secrets are missing. Follow docs/guides/release-key.md, then re-run this job. Refusing to publish an unsigned release."
+            exit 1
+          fi
       - uses: game-ci/unity-builder@v4
         with:
           projectPath: app
@@ -77,9 +100,46 @@ jobs:
           androidExportType: androidPackage
           buildMethod: DiyVr.EditorTools.CiBuild.BuildAndroid
           buildName: diy-vr
-          versioning: None
+          versioning: Custom
+          version: ${{ steps.ver.outputs.version }}
+          androidVersionCode: ${{ github.run_number }}
+          androidKeystoreName: ${{ github.event_name == 'push' && 'release.p12' || '' }}
+          androidKeystoreBase64: ${{ github.event_name == 'push' && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
+          androidKeystorePass: ${{ github.event_name == 'push' && secrets.ANDROID_KEYSTORE_PASS || '' }}
+          androidKeyaliasName: ${{ github.event_name == 'push' && secrets.ANDROID_KEYALIAS_NAME || '' }}
+          androidKeyaliasPass: ${{ github.event_name == 'push' && secrets.ANDROID_KEYALIAS_PASS || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: diy-vr-android-apk
           path: build/Android
           if-no-files-found: error
+
+  release:
+    name: Publish release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: diy-vr-android-apk
+          path: dist
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(tr -d ' \r\n' < VERSION).${{ github.run_number }}"
+          TAG="v$VERSION"
+          PREV="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          if [ -n "$PREV" ]; then RANGE="$PREV..HEAD"; else RANGE="HEAD"; fi
+          git log -n 30 --no-merges --pretty='- %s' "$RANGE" > notes.md
+          [ -s notes.md ] || echo "- No changes listed" > notes.md
+          APK="$(ls dist/*.apk | head -n1)"
+          cp "$APK" "dist/diy-vr-$VERSION.apk"
+          gh release create "$TAG" "dist/diy-vr-$VERSION.apk" \
+            --title "DIY VR $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
