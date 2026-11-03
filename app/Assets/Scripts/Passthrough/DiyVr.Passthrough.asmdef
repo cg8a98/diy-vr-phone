@@ -1,0 +1,20 @@
+{
+    "name": "DiyVr.Passthrough",
+    "rootNamespace": "DiyVr.Passthrough",
+    "references": [
+        "DiyVr.Runtime",
+        "DiyVr.Tracking",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
