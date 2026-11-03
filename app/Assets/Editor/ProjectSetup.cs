@@ -32,7 +32,37 @@ namespace DiyVr.EditorTools
         {
             EnableArCoreLoader();
             ConfigureArCoreSettings();
+            UpgradeUrpAsset();
+            // ARCore's build step rejects Vulkan, so Android uses OpenGLES3 only.
+            PlayerSettings.SetUseDefaultGraphicsAPIs(UnityEditor.BuildTarget.Android, false);
+            PlayerSettings.SetGraphicsAPIs(UnityEditor.BuildTarget.Android,
+                new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
             AssetDatabase.SaveAssets();
+        }
+
+        // The URP asset was hand-written with a guessed k_AssetVersion; the URP build step refuses assets
+        // that are not at the package's last version. Read that version from the package and stamp it.
+        private static void UpgradeUrpAsset()
+        {
+            var type = Type.GetType("UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset, Unity.RenderPipelines.Universal.Runtime");
+            if (type == null) { Debug.LogWarning("URP asset type not found"); return; }
+            var field = type.GetField("k_LastVersion", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (field == null) { Debug.LogWarning("URP k_LastVersion not found"); return; }
+            var last = Convert.ToInt32(field.GetRawConstantValue());
+            Debug.Log("URP k_LastVersion = " + last);
+            foreach (var guid in AssetDatabase.FindAssets("t:UniversalRenderPipelineAsset"))
+            {
+                var asset = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(guid));
+                if (asset == null) continue;
+                var so = new SerializedObject(asset);
+                var v = so.FindProperty("k_AssetVersion");
+                var pv = so.FindProperty("k_AssetPreviousVersion");
+                if (v == null) continue;
+                v.intValue = last;
+                if (pv != null) pv.intValue = last;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(asset);
+            }
         }
 
         private static void EnableArCoreLoader()
