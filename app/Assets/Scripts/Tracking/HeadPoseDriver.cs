@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using DiyVr.Stereo;
+using Unity.Collections;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,6 +29,11 @@ namespace DiyVr.Tracking
         private Camera _arCamera;
         private RenderTexture _arDummyRt;
         private ARCameraManager _cameraManager;
+        private bool _configDone;
+        private float _nextConfigTry;
+
+        /// <summary>Frame rate of the camera configuration that was selected (0 until chosen or if unknown).</summary>
+        public int ChosenCameraFps { get; private set; }
 
         /// <summary>Tracker access for the debug overlay (1.7) and passthrough (1.8).</summary>
         public HeadPoseTracker Tracker { get { return _tracker; } }
@@ -57,6 +64,7 @@ namespace DiyVr.Tracking
             if (_arRoot != null) Destroy(_arRoot);
             if (_arDummyRt != null) Destroy(_arDummyRt);
             _arRoot = null; _arCamera = null; _arDummyRt = null; _cameraManager = null;
+            _configDone = false; ChosenCameraFps = 0;
         }
 
         private void OnTrackingChanged(bool tracking)
@@ -70,7 +78,9 @@ namespace DiyVr.Tracking
             // Inactive while assembling so components see their final settings in OnEnable.
             _arRoot = new GameObject("AR Rig");
             _arRoot.SetActive(false);
-            _arRoot.AddComponent<ARSession>();
+            var session = _arRoot.AddComponent<ARSession>();
+            // Default is true: Unity would then cap the app at the 30 fps camera rate. Set before activation.
+            session.matchFrameRateRequested = false;
             _arRoot.AddComponent<ARInputManager>();
 
             var offset = new GameObject("Camera Offset");
@@ -126,8 +136,47 @@ namespace DiyVr.Tracking
                 && ARSession.notTrackingReason == NotTrackingReason.None;
         }
 
+        // Picks the highest-frame-rate camera configuration once the camera subsystem reports any.
+        private void TrySelectCameraConfiguration()
+        {
+            if (_configDone || _cameraManager == null || Time.unscaledTime < _nextConfigTry) return;
+            _nextConfigTry = Time.unscaledTime + 0.5f;
+            if (_cameraManager.subsystem == null) return;
+            NativeArray<XRCameraConfiguration> configs = default(NativeArray<XRCameraConfiguration>);
+            try
+            {
+                configs = _cameraManager.GetConfigurations(Allocator.Temp);
+                {
+                    if (!configs.IsCreated || configs.Length == 0) return;
+                    var infos = new List<CameraConfigInfo>(configs.Length);
+                    for (int i = 0; i < configs.Length; i++)
+                    {
+                        object fps = configs[i].framerate; // int? in AR Foundation; boxing keeps this compile-safe
+                        infos.Add(new CameraConfigInfo(configs[i].width, configs[i].height, fps is int ? (int)fps : 0));
+                    }
+                    int best = CameraConfigChooser.ChooseIndex(infos);
+                    _configDone = true;
+                    if (best < 0) return;
+                    ChosenCameraFps = infos[best].Fps;
+                    var current = _cameraManager.currentConfiguration;
+                    if (!current.HasValue || !current.Value.Equals(configs[best]))
+                        _cameraManager.currentConfiguration = configs[best];
+                }
+            }
+            catch (System.Exception e)
+            {
+                _configDone = true; // do not retry every frame
+                UnityEngine.Debug.LogWarning("Camera configuration choice failed: " + e.Message);
+            }
+            finally
+            {
+                if (configs.IsCreated) configs.Dispose();
+            }
+        }
+
         private void LateUpdate()
         {
+            TrySelectCameraConfiguration();
             if (_tracker == null || _arCamera == null) return;
             Transform t = _arCamera.transform;
             _tracker.Update(Time.unscaledTimeAsDouble, t.position, t.rotation, ArTracking());
