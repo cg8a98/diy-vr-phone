@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a running build on main: each merge must finish and publish its release.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
