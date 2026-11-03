@@ -1,4 +1,5 @@
 using System.Text;
+using DiyVr.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.ARFoundation;
@@ -7,7 +8,7 @@ namespace DiyVr.Diagnostics
 {
     /// <summary>
     /// On-screen debug readout: FPS, frame time, ARCore tracking state, thermal status, build version.
-    /// Toggle with a three-finger tap, a double tap in the top-left corner, or <see cref="Toggle"/>.
+    /// Toggle with a three-finger tap (routed by GestureArbiter) or <see cref="Toggle"/>.
     /// The text is built separately from the drawing (<see cref="BuildText"/>) so a world-space
     /// version can reuse it later.
     /// </summary>
@@ -71,18 +72,15 @@ namespace DiyVr.Diagnostics
                 return;
 
             int count = 0;
-            Vector2 pos = Vector2.zero;
             var touches = screen.touches;
             for (int i = 0; i < touches.Count; i++)
             {
-                if (!touches[i].press.isPressed)
-                    continue;
-                if (count == 0)
-                    pos = touches[i].position.ReadValue();
-                count++;
+                if (touches[i].press.isPressed)
+                    count++;
             }
 
-            if (_toggle.Update(Time.unscaledTime, count, pos, new Vector2(Screen.width, Screen.height)))
+            if (_toggle.Update(Time.unscaledTime, count)
+                && GestureArbiter.Shared.Allows(GestureTarget.Overlay, TouchGesture.ThreeFingerTap))
                 Toggle();
         }
 

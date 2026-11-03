@@ -1,22 +1,20 @@
 # Handoff
 
-Updated: 2026-11-03 by kickoff thread (PM)
+Updated: 2026-11-03 by builder (ticket 1.10)
 
 ## Current phase and milestone
 Phase 6 (Build). Milestone 1 - Foundation (see docs/03-build-plan.md section 3).
 
 ## State per ticket
-| Ticket | Branch | Last commit | Pull request | Status |
-|---|---|---|---|---|
-| 1.1 Repo skeleton | - | - | - | Ready |
-| 1.2 Unity project | - | - | - | Blocked by 1.1 |
-| 1.3 CI build | - | - | - | Blocked by 1.2 + owner's Unity secrets |
-| 1.4 Stereo rig | - | - | - | Blocked by 1.2 |
-| 1.5 6DoF head pose | - | - | - | Blocked by 1.4 |
-| 1.6 Lens profile tool | - | - | - | Blocked by 1.4; owner testing needs headset |
-| 1.7 Debug overlay | - | - | - | Blocked by 1.5 |
-| 1.8 Passthrough toggle | - | - | - | Blocked by 1.5 |
-| 1.9 Release signing and publishing | - | - | - | Blocked by 1.3 |
+| Ticket | Pull request | Status |
+|---|---|---|
+| 1.1 to 1.9 | merged to main | Done. First signed release is v0.1.28 |
+| 1.10 Milestone 1 integration | branch ticket/1.10-integration | In progress: wires stereo, head pose, test content, overlay, passthrough and lens tool into one app; one touch-gesture plan; missing .meta files; AR background in the URP renderer |
+
+## Touch gestures (one plan, no clashes)
+- Three-finger tap: debug overlay.
+- Double tap anywhere: passthrough.
+- Two-finger tap: lens tool. While it is open it gets all touches and the other two are ignored.
 
 ## Paused workers
 None.
@@ -25,13 +23,16 @@ None.
 - Confirm spending caps (Playbook 2.4).
 
 ## Next steps (in order)
-1. Builder: ticket 1.1.
-2. Owner: add Unity secrets to the repo (guide to be sent with ticket 1.3).
-3. Builder: 1.2, then 1.3 and 1.4 in parallel (different files).
+1. PM: review and merge ticket 1.10 once CI is green.
+2. Carlos: install the new release APK and run the milestone 1 acceptance test on the headset (steps are in the 1.10 pull request).
+3. After his results: fix what he reports, then plan milestone 2.
 
 ## Gotchas
-- Unity can't be opened interactively in the cloud container; builders verify compilation through CI (GameCI) once 1.3 lands. Until then, keep 1.2 minimal and correct by construction.
+- Unity can't be opened in the cloud container; CI (GameCI) is the compiler. Write careful C#.
 - Never commit scan files or personal data (see .gitignore).
+- Android uses OpenGLES3 only (ARCore does not support Vulkan).
+- Up to 3 builders at once (owner's decision, 2026-11-03).
+- The passthrough image is not scaled to the lens field of view, so it will not line up with the real world yet.
 
 ## Scratch files
 None.
