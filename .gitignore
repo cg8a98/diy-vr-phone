@@ -24,3 +24,17 @@ private/
 *.spz
 *.keystore
 *.jks
+
+# Unity (app/)
+app/[Ll]ibrary/
+app/[Tt]emp/
+app/[Oo]bj/
+app/[Bb]uild/
+app/[Bb]uilds/
+app/[Ll]ogs/
+app/[Uu]serSettings/
+app/[Mm]emoryCaptures/
+app/*.csproj
+app/*.sln
+app/.vs/
+app/Assets/Plugins/Android/*.keystore
