@@ -33,6 +33,10 @@ namespace DiyVr.EditorTools
             EnableArCoreLoader();
             ConfigureArCoreSettings();
             UpgradeUrpAsset();
+            // ARCore's build step rejects Vulkan, so Android uses OpenGLES3 only.
+            PlayerSettings.SetUseDefaultGraphicsAPIs(UnityEditor.BuildTarget.Android, false);
+            PlayerSettings.SetGraphicsAPIs(UnityEditor.BuildTarget.Android,
+                new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
             AssetDatabase.SaveAssets();
         }
 
