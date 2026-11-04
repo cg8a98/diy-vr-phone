@@ -24,9 +24,27 @@ namespace DiyVr.Tests
         }
 
         [Test]
-        public void NoMatchReturnsZero()
+        public void NoExactMatchFallsBackToHighestOverall()
         {
-            Assert.AreEqual(0.0, RefreshRateChooser.ChooseHighest(new[] { 100 }, new[] { 100 }, new[] { 90.0 }, 200, 200));
+            var w = new[] { 3088, 3088, 1544 };
+            var h = new[] { 1440, 1440, 720 };
+            var hz = new[] { 60.0, 120.0, 90.0 };
+            Assert.AreEqual(120.0, RefreshRateChooser.ChooseHighest(w, h, hz, 2316, 1080));
+        }
+
+        [Test]
+        public void ExactMatchWinsOverHigherOtherSize()
+        {
+            var w = new[] { 2316, 3088 };
+            var h = new[] { 1080, 1440 };
+            var hz = new[] { 60.0, 120.0 };
+            Assert.AreEqual(60.0, RefreshRateChooser.ChooseHighest(w, h, hz, 2316, 1080));
+        }
+
+        [Test]
+        public void EmptyArraysReturnZero()
+        {
+            Assert.AreEqual(0.0, RefreshRateChooser.ChooseHighest(new int[0], new int[0], new double[0], 200, 200));
         }
 
         [Test]
