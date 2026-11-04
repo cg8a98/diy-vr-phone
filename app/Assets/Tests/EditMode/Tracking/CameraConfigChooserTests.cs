@@ -48,5 +48,29 @@ namespace DiyVr.Tests
             var list = new[] { C(1920, 1080, 60), C(1920, 1080, 60) };
             Assert.AreEqual(0, CameraConfigChooser.ChooseIndex(list));
         }
+    
+        [Test]
+        public void ShouldSwitch_SameFpsDifferentResolution_False()
+        {
+            Assert.IsFalse(CameraConfigChooser.ShouldSwitch(C(640, 480, 30), true, C(1920, 1080, 30)));
+        }
+
+        [Test]
+        public void ShouldSwitch_HigherFps_True()
+        {
+            Assert.IsTrue(CameraConfigChooser.ShouldSwitch(C(1920, 1080, 30), true, C(640, 480, 60)));
+        }
+
+        [Test]
+        public void ShouldSwitch_LowerFps_False()
+        {
+            Assert.IsFalse(CameraConfigChooser.ShouldSwitch(C(1920, 1080, 60), true, C(1920, 1080, 30)));
+        }
+
+        [Test]
+        public void ShouldSwitch_NoCurrent_False()
+        {
+            Assert.IsFalse(CameraConfigChooser.ShouldSwitch(default(CameraConfigInfo), false, C(1920, 1080, 60)));
+        }
     }
 }

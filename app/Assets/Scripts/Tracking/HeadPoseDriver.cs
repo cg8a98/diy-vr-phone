@@ -136,7 +136,7 @@ namespace DiyVr.Tracking
                 && ARSession.notTrackingReason == NotTrackingReason.None;
         }
 
-        // Picks the highest-frame-rate camera configuration once the camera subsystem reports any.
+        // Switches to a higher-frame-rate camera configuration only if one exists; otherwise keeps the default, once the camera subsystem reports any.
         private void TrySelectCameraConfiguration()
         {
             if (_configDone || _cameraManager == null || Time.unscaledTime < _nextConfigTry) return;
@@ -157,10 +157,23 @@ namespace DiyVr.Tracking
                     int best = CameraConfigChooser.ChooseIndex(infos);
                     _configDone = true;
                     if (best < 0) return;
-                    ChosenCameraFps = infos[best].Fps;
                     var current = _cameraManager.currentConfiguration;
-                    if (!current.HasValue || !current.Value.Equals(configs[best]))
+                    bool hasCurrent = current.HasValue;
+                    CameraConfigInfo currentInfo = default(CameraConfigInfo);
+                    if (hasCurrent)
+                    {
+                        object curFps = current.Value.framerate;
+                        currentInfo = new CameraConfigInfo(current.Value.width, current.Value.height, curFps is int ? (int)curFps : 0);
+                    }
+                    if (CameraConfigChooser.ShouldSwitch(currentInfo, hasCurrent, infos[best]))
+                    {
                         _cameraManager.currentConfiguration = configs[best];
+                        ChosenCameraFps = infos[best].Fps;
+                    }
+                    else
+                    {
+                        ChosenCameraFps = hasCurrent ? currentInfo.Fps : 0; // keep ARCore's default mode
+                    }
                 }
             }
             catch (System.Exception e)
