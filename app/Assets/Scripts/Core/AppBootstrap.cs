@@ -12,6 +12,7 @@ namespace DiyVr.Core
 
         private void Awake()
         {
+            if (GetComponent<DisplayModeKeeper>() == null) gameObject.AddComponent<DisplayModeKeeper>();
             Apply();
         }
 
@@ -30,6 +31,8 @@ namespace DiyVr.Core
         /// </summary>
         public static void RequestHighestRefreshRate()
         {
+            // Window-level display mode request; this is what holds 120 Hz on Samsung Adaptive.
+            AndroidDisplayMode.Request();
             try
             {
                 var modes = Screen.resolutions;
