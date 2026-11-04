@@ -105,6 +105,7 @@ namespace DiyVr.Diagnostics
             _sb.Length = 0;
             _sb.Append("FPS ").Append(_fps.Fps.ToString("0.0"))
                .Append("  (").Append(_fps.FrameMs.ToString("0.0")).Append(" ms)\n");
+            _sb.Append("Display ").Append(Screen.currentResolution.refreshRateRatio.value.ToString("0")).Append(" Hz\n");
             _sb.Append("Tracking ").Append(ARSession.state);
             if (ARSession.state == ARSessionState.SessionInitializing || ARSession.state == ARSessionState.SessionTracking)
                 _sb.Append(" / ").Append(ARSession.notTrackingReason);
