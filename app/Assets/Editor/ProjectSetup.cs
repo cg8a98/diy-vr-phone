@@ -38,6 +38,8 @@ namespace DiyVr.EditorTools
             PlayerSettings.SetUseDefaultGraphicsAPIs(UnityEditor.BuildTarget.Android, false);
             PlayerSettings.SetGraphicsAPIs(UnityEditor.BuildTarget.Android,
                 new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            // Swappy (Optimized Frame Pacing) can hold the app at the display's current rate; off lets 120 Hz through.
+            PlayerSettings.Android.optimizedFramePacing = false;
             AssetDatabase.SaveAssets();
         }
 
