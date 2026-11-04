@@ -39,6 +39,16 @@ namespace DiyVr.Tracking
             return best;
         }
 
+        /// <summary>
+        /// True only when the best configuration has a strictly higher frame rate than the one in use.
+        /// Same or lower fps, or no current configuration, keeps ARCore's default (switching can drop the display to 60 Hz).
+        /// </summary>
+        public static bool ShouldSwitch(CameraConfigInfo current, bool hasCurrent, CameraConfigInfo best)
+        {
+            if (!hasCurrent) return false;
+            return best.Fps > current.Fps;
+        }
+
         private static bool IsBetter(CameraConfigInfo a, CameraConfigInfo b, long target)
         {
             if (a.Fps != b.Fps) return a.Fps > b.Fps;
