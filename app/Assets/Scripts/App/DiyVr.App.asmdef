@@ -6,7 +6,8 @@
         "DiyVr.Tracking",
         "DiyVr.Debug",
         "DiyVr.Passthrough",
-        "DiyVr.LensTool"
+        "DiyVr.LensTool",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
