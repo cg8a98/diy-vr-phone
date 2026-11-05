@@ -148,6 +148,76 @@ namespace DiyVr.Tests
         }
 
         [Test]
+        public void LensSpacingRow_ReadsAndWritesLensSpacing()
+        {
+            var row = LensParameters.Get(LensParameter.LensSpacing);
+            Assert.AreEqual("Lens spacing", row.Label);
+            Assert.AreEqual(63.9, row.Get(_p), 1e-6);
+            row.StepBy(_p, 1);
+            Assert.AreEqual(64.4, row.Get(_p), 1e-6);
+            Assert.AreEqual(0.0644f, _p.lensSpacing, 1e-6f);
+            Assert.AreEqual(0.0665f, _p.ipd, 1e-7f); // IPD untouched
+            row.Set(_p, 10);
+            Assert.AreEqual(45.0, row.Get(_p), 1e-6);
+            row.Set(_p, 200);
+            Assert.AreEqual(75.0, row.Get(_p), 1e-6);
+            Assert.AreEqual(LensParameter.LensSpacing, row.Id);
+            Assert.AreEqual(6, (int)LensParameter.LensSpacing);
+            Assert.AreEqual("Eye spacing (IPD)", LensParameters.Get(LensParameter.Ipd).Label);
+        }
+
+        [Test]
+        public void Migration_OldProfileWithoutLensSpacing_UsesOldIpdAsLensSpacing()
+        {
+            float ipd = 0.0545f, ls = 0.0639f;
+            LensProfileStore.MigrateLensSpacing("{\"ipd\":0.0545,\"k1\":0.4}", ref ipd, ref ls);
+            Assert.AreEqual(0.0545f, ls, 1e-7f);
+            Assert.AreEqual(0.0665f, ipd, 1e-7f);
+        }
+
+        [Test]
+        public void Migration_ZeroLensSpacing_IsTreatedAsMissing()
+        {
+            float ipd = 0.055f, ls = 0f;
+            LensProfileStore.MigrateLensSpacing("{\"ipd\":0.055,\"lensSpacing\":0}", ref ipd, ref ls);
+            Assert.AreEqual(0.055f, ls, 1e-7f);
+            Assert.AreEqual(0.0665f, ipd, 1e-7f);
+        }
+
+        [Test]
+        public void Migration_NewProfile_IsLeftAlone()
+        {
+            float ipd = 0.067f, ls = 0.0545f;
+            LensProfileStore.MigrateLensSpacing("{\"ipd\":0.067,\"lensSpacing\":0.0545}", ref ipd, ref ls);
+            Assert.AreEqual(0.0545f, ls, 1e-7f);
+            Assert.AreEqual(0.067f, ipd, 1e-7f);
+        }
+
+        [Test]
+        public void Load_OldJsonFile_MigratesAndNewSaveRoundTrips()
+        {
+            _fs.Files[Dir + "/old.json"] = "{\"ipd\":0.0545,\"k1\":0.3}";
+            var b = LensProfile.CreateDefault();
+            try
+            {
+                Assert.IsTrue(_store.TryLoad("old", b));
+                Assert.AreEqual(0.0545f, b.lensSpacing, 1e-6f);
+                Assert.AreEqual(0.0665f, b.ipd, 1e-6f);
+                b.ipd = 0.067f;
+                _store.Save("fresh", b);
+                var c = LensProfile.CreateDefault();
+                try
+                {
+                    Assert.IsTrue(_store.TryLoad("fresh", c));
+                    Assert.AreEqual(0.0545f, c.lensSpacing, 1e-6f);
+                    Assert.AreEqual(0.067f, c.ipd, 1e-6f);
+                }
+                finally { Object.DestroyImmediate(c); }
+            }
+            finally { Object.DestroyImmediate(b); }
+        }
+
+        [Test]
         public void Save_UnusableName_Throws()
         {
             Assert.Throws<System.ArgumentException>(() => _store.Save("///", _p));

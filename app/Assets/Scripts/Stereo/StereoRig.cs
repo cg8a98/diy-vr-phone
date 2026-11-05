@@ -57,6 +57,13 @@ namespace DiyVr.Stereo
             Rebuild();
         }
 
+        /// <summary>Changes the distance between the lens centres on the screen (metres) and rebuilds the rig.</summary>
+        public void SetLensSpacing(float metres)
+        {
+            Active.lensSpacing = metres;
+            Rebuild();
+        }
+
         private void OnEnable()
         {
             Screen.orientation = ScreenOrientation.LandscapeLeft;

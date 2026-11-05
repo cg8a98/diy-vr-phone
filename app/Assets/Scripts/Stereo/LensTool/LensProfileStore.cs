@@ -18,6 +18,7 @@ namespace DiyVr.Stereo.LensTool
         public const string Extension = ".json";
         public const string LastUsedFile = "last-used.txt";
         public const int MaxNameLength = 48;
+        public const float DefaultIpd = 0.0665f;
 
         private readonly IFileStore _fs;
         private readonly string _dir;
@@ -81,7 +82,9 @@ namespace DiyVr.Stereo.LensTool
             {
                 if (!_fs.Exists(path)) return false;
                 temp = LensProfile.CreateDefault();
-                temp.FromJson(_fs.ReadAllText(path));
+                var json = _fs.ReadAllText(path);
+                temp.FromJson(json);
+                MigrateLensSpacing(json, ref temp.ipd, ref temp.lensSpacing);
                 LensParameters.ClampAll(temp);
                 into.FromJson(temp.ToJson());
                 return true;
@@ -94,6 +97,18 @@ namespace DiyVr.Stereo.LensTool
             {
                 if (temp != null) DestroyObject(temp);
             }
+        }
+
+        /// <summary>
+        /// Old profiles (before ticket 1.16) have one "ipd" value that was tuned against the screen, so it becomes the lens spacing
+        /// and the eye spacing goes back to the default. Applies when the JSON has no lensSpacing field or it is 0.
+        /// </summary>
+        public static void MigrateLensSpacing(string json, ref float ipd, ref float lensSpacing)
+        {
+            bool hasField = json != null && json.IndexOf("\"lensSpacing\"", StringComparison.Ordinal) >= 0;
+            if (hasField && lensSpacing > 0f) return;
+            lensSpacing = ipd;
+            ipd = DefaultIpd;
         }
 
         /// <summary>Saved profile names, sorted.</summary>
