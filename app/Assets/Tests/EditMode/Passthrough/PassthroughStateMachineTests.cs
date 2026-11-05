@@ -131,5 +131,16 @@ namespace DiyVr.Tests
             s.SetTracking(true);   // 3: Auto -> Off
             Assert.AreEqual(3, n);
         }
+
+        [Test]
+        public void ModeChanged_RaisesOffWhenTrackingReturnsFromAuto()
+        {
+            var s = new PassthroughStateMachine();
+            var seen = new System.Collections.Generic.List<PassthroughMode>();
+            s.ModeChanged += seen.Add;
+            s.SetTracking(false);
+            s.SetTracking(true);
+            CollectionAssert.AreEqual(new[] { PassthroughMode.AutoOnTrackingLost, PassthroughMode.Off }, seen);
+        }
     }
 }
