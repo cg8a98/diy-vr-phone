@@ -12,7 +12,7 @@ namespace DiyVr.App
     /// file stays almost empty. Everything is added only if missing, so a scene that already holds its own
     /// StereoRig (StereoTest) still works, and the per-feature auto-installers find nothing left to do.
     ///
-    /// Built objects: StereoRig + HeadPoseDriver + PassthroughController + LensToolController on one "VR Rig"
+    /// Built objects: StereoRig + HeadPoseDriver + PassthroughController + LensToolController + GamepadControls on one "VR Rig"
     /// object, plus StereoTestContent and the DebugOverlay.
     /// Touch gestures are shared through <see cref="DiyVr.Core.GestureArbiter"/>.
     /// </summary>
@@ -55,6 +55,13 @@ namespace DiyVr.App
 
             if (Object.FindFirstObjectByType<DebugOverlay>() == null)
                 new GameObject("Debug Overlay").AddComponent<DebugOverlay>();
+
+            // Xbox controller (Bluetooth). Added last so every component it points at exists.
+            var pad = rig.gameObject.GetComponent<GamepadControls>();
+            if (pad == null) pad = rig.gameObject.AddComponent<GamepadControls>();
+            pad.lens = Object.FindFirstObjectByType<LensToolController>();
+            pad.passthrough = Object.FindFirstObjectByType<PassthroughController>();
+            pad.overlay = Object.FindFirstObjectByType<DebugOverlay>();
         }
 
         private static void AddIfMissing<T>(GameObject go) where T : Component
