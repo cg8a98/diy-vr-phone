@@ -35,6 +35,7 @@ namespace DiyVr.Stereo.LensTool
         private string _profileName;
         private int _row;
         private bool _open;
+        private bool _gridSuppressed;
         private bool _dirty;
         private string _status = "";
         private float _statusUntil;
@@ -136,7 +137,7 @@ namespace DiyVr.Stereo.LensTool
             GestureArbiter.Shared.LensToolOpen = true;
             EnsurePanel();
             _panel.SetActive(true);
-            _grid.SetActive(true);
+            ApplyGridVisibility();
             RefreshNames();
             UpdateText();
         }
@@ -146,7 +147,22 @@ namespace DiyVr.Stereo.LensTool
             _open = false;
             GestureArbiter.Shared.LensToolOpen = false;
             if (_panel != null) _panel.SetActive(false);
-            if (_grid != null) _grid.SetActive(false);
+            ApplyGridVisibility();
+        }
+
+        /// <summary>
+        /// Hides the lens tool grid while the camera view is on (the grid is opaque and would cover the camera image).
+        /// The panel stays visible. Safe to call before the grid exists; it applies when the tool opens.
+        /// </summary>
+        public void SetGridSuppressed(bool suppressed)
+        {
+            _gridSuppressed = suppressed;
+            ApplyGridVisibility();
+        }
+
+        private void ApplyGridVisibility()
+        {
+            if (_grid != null) _grid.SetActive(SceneVisibility.LensGridVisible(_gridSuppressed, _open));
         }
 
         public void SelectNext() { _row = (_row + 1) % RowCount; UpdateText(); }

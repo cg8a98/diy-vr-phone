@@ -17,6 +17,9 @@ namespace DiyVr.Stereo
         public float cubeDistance = 1f;
         public float cubeSize = 0.2f;
 
+        private GameObject _grid;
+        private bool _gridVisible = true;
+
         private void Start()
         {
             if (head == null)
@@ -29,6 +32,16 @@ namespace DiyVr.Stereo
             BuildCube(shader);
         }
 
+        /// <summary>
+        /// Shows or hides the distortion grid (hidden while the camera view is on, so it does not cover the camera
+        /// image). The cube is never touched. Safe to call before the grid is built; it applies once built.
+        /// </summary>
+        public void SetGridVisible(bool visible)
+        {
+            _gridVisible = visible;
+            if (_grid != null) _grid.SetActive(visible);
+        }
+
         private void BuildGrid(Shader shader)
         {
             var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -39,6 +52,8 @@ namespace DiyVr.Stereo
             quad.transform.localScale = new Vector3(gridHeight * 2f, gridHeight, 1f);
             var mat = new Material(shader) { mainTexture = MakeGridTexture(1024, 512, 16) };
             quad.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            _grid = quad;
+            _grid.SetActive(_gridVisible);
         }
 
         private void BuildCube(Shader shader)
