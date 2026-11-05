@@ -56,6 +56,21 @@ namespace DiyVr.App
             if (Object.FindFirstObjectByType<DebugOverlay>() == null)
                 new GameObject("Debug Overlay").AddComponent<DebugOverlay>();
 
+            // While the camera view is on, hide the opaque test grids so the camera image is not covered.
+            var passthrough = Object.FindFirstObjectByType<PassthroughController>();
+            var lensTool = Object.FindFirstObjectByType<LensToolController>();
+            var testContent = Object.FindFirstObjectByType<StereoTestContent>();
+            if (passthrough != null)
+            {
+                if (testContent != null) testContent.SetGridVisible(SceneVisibility.TestGridVisible(passthrough.IsVisible));
+                if (lensTool != null) lensTool.SetGridSuppressed(passthrough.IsVisible);
+                passthrough.VisibilityChanged += visible =>
+                {
+                    if (testContent != null) testContent.SetGridVisible(SceneVisibility.TestGridVisible(visible));
+                    if (lensTool != null) lensTool.SetGridSuppressed(visible);
+                };
+            }
+
             // Xbox controller (Bluetooth). Added last so every component it points at exists.
             var pad = rig.gameObject.GetComponent<GamepadControls>();
             if (pad == null) pad = rig.gameObject.AddComponent<GamepadControls>();
