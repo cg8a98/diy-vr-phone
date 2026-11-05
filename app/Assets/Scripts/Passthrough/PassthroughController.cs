@@ -4,6 +4,7 @@ using DiyVr.Tracking;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace DiyVr.Passthrough
 {
@@ -11,9 +12,10 @@ namespace DiyVr.Passthrough
     /// Shows the ARCore camera image in both eyes: on a double tap anywhere (routed by GestureArbiter), through
     /// <see cref="Toggle"/>, and automatically while HeadPoseDriver reports tracking lost.
     /// How: an ARCameraBackground is added to the AR camera (only enabled while visible). Each frame its material is
-    /// blitted into a RenderTexture, and a quad that fills each eye's frustum, just in front of the eye camera, shows it.
-    /// The same mono image goes to both eyes, centre-cropped to the eye aspect. It is NOT scaled to match the lens
-    /// field of view, so it does not line up with the real world (open question on the PR).
+    /// blitted into a RenderTexture, and a quad just in front of each eye camera shows it. The quad spans exactly the
+    /// camera's real field of view (from the ARCore intrinsics) and is centred straight ahead of the eye, so the
+    /// image has its true angular size. Its material draws as background and writes no depth, so scene content and
+    /// the lens tool panel draw on top. The same mono image goes to both eyes.
     /// Added automatically next to StereoRig.
     /// </summary>
     [DisallowMultipleComponent]
@@ -31,7 +33,13 @@ namespace DiyVr.Passthrough
         private RenderTexture _image;
         private Material _material;
         private Camera _leftBuiltFor, _rightBuiltFor;
-        private Matrix4x4 _leftProj, _rightProj;
+        private int _leftBuiltVersion = -1, _rightBuiltVersion = -1;
+        private ARCameraManager _cameraManager;
+        private Vector3[] _corners;
+        private int _cornersVersion;
+        private Vector4 _intrinsicsKey;
+        private float _screenAspectKey;
+        private bool _hasIntrinsics;
         private GameObject _leftQuad, _rightQuad;
         private Mesh _leftMesh, _rightMesh;
         private bool _wasVisible;
@@ -180,36 +188,33 @@ namespace DiyVr.Passthrough
             if (_rig == null || _rig.LeftEye == null || _rig.RightEye == null) return;
             if (_material == null)
             {
-                Shader shader = _rig.unlitShader != null ? _rig.unlitShader : Shader.Find("DiyVr/StereoUnlit");
+                // Background shader without depth write; the fallbacks write depth but still draw first.
+                Shader shader = Shader.Find("DiyVr/PassthroughImage");
+                if (shader == null) shader = _rig.unlitShader != null ? _rig.unlitShader : Shader.Find("DiyVr/StereoUnlit");
                 if (shader == null) shader = Shader.Find("Unlit/Texture");
                 if (shader == null) return;
                 _material = new Material(shader) { name = "PassthroughMat" };
+                _material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
             }
             _material.mainTexture = _image;
-            Ensure(_rig.LeftEye, true, ref _leftBuiltFor, ref _leftProj, ref _leftQuad, ref _leftMesh, "PassthroughLeft");
-            Ensure(_rig.RightEye, false, ref _rightBuiltFor, ref _rightProj, ref _rightQuad, ref _rightMesh, "PassthroughRight");
+            UpdateCorners();
+            Ensure(_rig.LeftEye, true, ref _leftBuiltFor, ref _leftBuiltVersion, ref _leftQuad, ref _leftMesh, "PassthroughLeft");
+            Ensure(_rig.RightEye, false, ref _rightBuiltFor, ref _rightBuiltVersion, ref _rightQuad, ref _rightMesh, "PassthroughRight");
             if (_leftQuad != null) _leftQuad.SetActive(true);
             if (_rightQuad != null) _rightQuad.SetActive(true);
         }
 
         // (Re)builds the quad when the eye camera was replaced (StereoRig.Rebuild) or its projection changed.
-        private void Ensure(Camera eye, bool left, ref Camera builtFor, ref Matrix4x4 proj, ref GameObject quad, ref Mesh mesh, string name)
+        private void Ensure(Camera eye, bool left, ref Camera builtFor, ref int builtVersion, ref GameObject quad, ref Mesh mesh, string name)
         {
-            if (quad != null && builtFor == eye && proj == eye.projectionMatrix) return;
+            if (quad != null && builtFor == eye && builtVersion == _cornersVersion) return;
             if (quad != null) Destroy(quad);
             if (mesh != null) Destroy(mesh);
 
-            Vector3[] c = PassthroughLayout.FrustumQuad(eye.projectionMatrix, quadDistance);
-            float aspect = (c[1] - c[0]).magnitude / Mathf.Max(1e-6f, (c[3] - c[0]).magnitude);
-            Rect uv = PassthroughLayout.CenterCrop(aspect, (float)imageSize.x / imageSize.y);
-
+            // The image fills the whole quad: the blit already shows the part of the camera image that matches the screen.
             mesh = new Mesh { name = name + "Mesh" };
-            mesh.vertices = c;
-            mesh.uv = new[]
-            {
-                new Vector2(uv.xMin, uv.yMin), new Vector2(uv.xMax, uv.yMin),
-                new Vector2(uv.xMax, uv.yMax), new Vector2(uv.xMin, uv.yMax)
-            };
+            mesh.vertices = _corners;
+            mesh.uv = new[] { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) };
             mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
             mesh.RecalculateBounds();
 
@@ -223,7 +228,44 @@ namespace DiyVr.Passthrough
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             mr.receiveShadows = false;
             builtFor = eye;
-            proj = eye.projectionMatrix;
+            builtVersion = _cornersVersion;
+        }
+
+        // Quad corners from the camera intrinsics (true angular size, centred on the optical axis). The blit through
+        // ARCameraBackground shows the centre crop of the camera image that has the screen's aspect, so that crop is
+        // what the quad spans. Falls back to a symmetric 70 x 55 degree quad until intrinsics are available.
+        private void UpdateCorners()
+        {
+            float screenAspect = Screen.height > 0 ? (float)Screen.width / Screen.height : 1f;
+            Vector4 key = Vector4.zero;
+            bool have = false;
+            if (_cameraManager == null && _driver != null && _driver.ArCamera != null)
+                _cameraManager = _driver.ArCamera.GetComponent<ARCameraManager>();
+            if (_cameraManager == null) _cameraManager = FindFirstObjectByType<ARCameraManager>();
+            XRCameraIntrinsics k;
+            if (_cameraManager != null && _cameraManager.TryGetIntrinsics(out k)
+                && k.resolution.x > 0 && k.resolution.y > 0 && k.focalLength.x > 0f && k.focalLength.y > 0f)
+            {
+                have = true;
+                key = new Vector4(k.focalLength.x, k.focalLength.y, k.principalPoint.x, k.principalPoint.y);
+                key.x += k.resolution.x * 1e6f; // fold the resolution into the change check
+                key.y += k.resolution.y * 1e6f;
+                if (_corners != null && _hasIntrinsics && key == _intrinsicsKey && Mathf.Approximately(screenAspect, _screenAspectKey)) return;
+                float w = k.resolution.x, h = k.resolution.y;
+                Rect visible = PassthroughLayout.CenterCrop(screenAspect, w / h);
+                _corners = PassthroughLayout.IntrinsicsQuad(k.focalLength.x, k.focalLength.y, k.principalPoint.x, k.principalPoint.y,
+                    w, h, quadDistance, visible);
+            }
+            else
+            {
+                if (_corners != null && !_hasIntrinsics) return;
+                _corners = PassthroughLayout.SymmetricQuad(PassthroughLayout.FallbackHorizontalFovDegrees,
+                    PassthroughLayout.FallbackVerticalFovDegrees, quadDistance);
+            }
+            _hasIntrinsics = have;
+            _intrinsicsKey = key;
+            _screenAspectKey = screenAspect;
+            _cornersVersion++;
         }
 
         private void HideVisuals()
@@ -243,6 +285,7 @@ namespace DiyVr.Passthrough
             if (_image != null) Destroy(_image);
             _leftQuad = _rightQuad = null; _leftMesh = _rightMesh = null; _material = null; _image = null;
             _leftBuiltFor = _rightBuiltFor = null;
+            _leftBuiltVersion = _rightBuiltVersion = -1;
         }
     }
 }
