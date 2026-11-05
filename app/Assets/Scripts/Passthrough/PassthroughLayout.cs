@@ -41,6 +41,49 @@ namespace DiyVr.Passthrough
             return result;
         }
 
+        /// <summary>Default field of view used until the camera intrinsics are known.</summary>
+        public const float FallbackHorizontalFovDegrees = 70f;
+        public const float FallbackVerticalFovDegrees = 55f;
+
+        /// <summary>
+        /// Corners (bottom-left, bottom-right, top-right, top-left) in the eye camera's local space (looks down +z) of
+        /// a rectangle at <paramref name="distance"/> that shows the camera image at its true angular size. The
+        /// optical axis (the principal point) lands straight ahead of the eye, not at the frustum centre.
+        /// fx, fy, cx, cy, w, h are camera intrinsics in pixels (cy measured from the top of the image).
+        /// <paramref name="visible"/> is the part of the image that is shown, in 0..1 image coordinates with v up
+        /// (default: the whole image).
+        /// </summary>
+        public static Vector3[] IntrinsicsQuad(float fx, float fy, float cx, float cy, float w, float h, float distance, Rect visible)
+        {
+            float u0 = visible.xMin * w, u1 = visible.xMax * w;
+            float pyTop = (1f - visible.yMax) * h, pyBottom = (1f - visible.yMin) * h;
+            float xl = (u0 - cx) / fx * distance, xr = (u1 - cx) / fx * distance;
+            float yt = (cy - pyTop) / fy * distance, yb = (cy - pyBottom) / fy * distance;
+            return new[]
+            {
+                new Vector3(xl, yb, distance), new Vector3(xr, yb, distance),
+                new Vector3(xr, yt, distance), new Vector3(xl, yt, distance)
+            };
+        }
+
+        /// <summary>The whole camera image at its true angular size. See the overload with a visible rectangle.</summary>
+        public static Vector3[] IntrinsicsQuad(float fx, float fy, float cx, float cy, float w, float h, float distance)
+        {
+            return IntrinsicsQuad(fx, fy, cx, cy, w, h, distance, new Rect(0f, 0f, 1f, 1f));
+        }
+
+        /// <summary>Symmetric quad for a given field of view (used until the real intrinsics are known).</summary>
+        public static Vector3[] SymmetricQuad(float horizontalFovDegrees, float verticalFovDegrees, float distance)
+        {
+            float hx = Mathf.Tan(horizontalFovDegrees * 0.5f * Mathf.Deg2Rad) * distance;
+            float hy = Mathf.Tan(verticalFovDegrees * 0.5f * Mathf.Deg2Rad) * distance;
+            return new[]
+            {
+                new Vector3(-hx, -hy, distance), new Vector3(hx, -hy, distance),
+                new Vector3(hx, hy, distance), new Vector3(-hx, hy, distance)
+            };
+        }
+
         /// <summary>
         /// Centre crop of the camera image so it fills a quad of the given aspect without stretching.
         /// Returns (uMin, vMin, uWidth, vHeight).

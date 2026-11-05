@@ -3,6 +3,7 @@ using DiyVr.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace DiyVr.Diagnostics
 {
@@ -68,7 +69,7 @@ namespace DiyVr.Diagnostics
             _text = BuildText();
         }
 
-        // Current ARCore camera configuration, e.g. "60 fps 1920x1080". The camera rate can differ from the app FPS.
+        // Current ARCore camera configuration, e.g. "30 fps 640x480 FOV 68x53". The camera rate can differ from the app FPS.
         private string ReadCameraLabel()
         {
             if (_cameraManager == null) _cameraManager = FindFirstObjectByType<ARCameraManager>();
@@ -77,7 +78,16 @@ namespace DiyVr.Diagnostics
             if (!cfg.HasValue) return "n/a";
             object fps = cfg.Value.framerate; // int? in AR Foundation; boxing keeps this compile-safe
             string rate = fps is int ? ((int)fps).ToString() + " fps" : "? fps";
-            return rate + " " + cfg.Value.width + "x" + cfg.Value.height;
+            string label = rate + " " + cfg.Value.width + "x" + cfg.Value.height;
+            XRCameraIntrinsics k;
+            if (_cameraManager.TryGetIntrinsics(out k))
+            {
+                // Which physical lens ARCore uses shows up as the field of view of the camera image.
+                Vector2 fov = CameraFov.Degrees(k.focalLength.x, k.focalLength.y, k.principalPoint.x, k.principalPoint.y,
+                    k.resolution.x, k.resolution.y);
+                if (fov.x > 0f) label += " FOV " + fov.x.ToString("0") + "x" + fov.y.ToString("0");
+            }
+            return label;
         }
 
         private void PollToggleGesture()
