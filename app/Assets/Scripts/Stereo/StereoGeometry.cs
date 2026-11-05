@@ -39,7 +39,7 @@ namespace DiyVr.Stereo
 
         public static EyeGeometry ComputeEye(StereoParams p, EyeSide side)
         {
-            double cx = side == EyeSide.Left ? -p.Ipd / 2.0 : p.Ipd / 2.0;
+            double cx = side == EyeSide.Left ? -p.LensSpacing / 2.0 : p.LensSpacing / 2.0;
             double xMin = side == EyeSide.Left ? -p.ScreenWidth / 2.0 : 0.0;
             double xMax = side == EyeSide.Left ? 0.0 : p.ScreenWidth / 2.0;
             var g = new EyeGeometry

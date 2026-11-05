@@ -15,8 +15,10 @@ namespace DiyVr.Stereo
         public float screenHeight = 0.0729f;
 
         [Header("Headset geometry (metres)")]
-        [Tooltip("Distance between the eyes / lens centres. Default 66.5 mm.")]
+        [Tooltip("Distance between the eyes (virtual camera separation). Default 66.5 mm.")]
         public float ipd = 0.0665f;
+        [Tooltip("Distance between the two lens centres on the phone screen (metres). Cardboard v2 default 63.9 mm. Separate from ipd, which only sets the virtual camera separation.")]
+        public float lensSpacing = 0.0639f;
         [Tooltip("Distance from screen to lens.")]
         public float screenToLensDistance = 0.042f;
         [Tooltip("Distance from lens to the eye (eye relief). Stored for the lens tool; the Cardboard model does not use it for the field of view.")]
@@ -44,6 +46,7 @@ namespace DiyVr.Stereo
                 ScreenWidth = screenWidth,
                 ScreenHeight = screenHeight,
                 Ipd = ipd,
+                LensSpacing = lensSpacing,
                 ScreenToLens = screenToLensDistance,
                 LensCenterYOffset = lensCenterYOffset,
                 K1 = k1,
@@ -63,6 +66,6 @@ namespace DiyVr.Stereo
     [Serializable]
     public struct StereoParams
     {
-        public double ScreenWidth, ScreenHeight, Ipd, ScreenToLens, LensCenterYOffset, K1, K2, MaxHalfFovRadians;
+        public double ScreenWidth, ScreenHeight, Ipd, LensSpacing, ScreenToLens, LensCenterYOffset, K1, K2, MaxHalfFovRadians;
     }
 }

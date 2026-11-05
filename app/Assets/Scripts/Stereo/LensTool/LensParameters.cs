@@ -3,7 +3,7 @@ using DiyVr.Stereo;
 
 namespace DiyVr.Stereo.LensTool
 {
-    public enum LensParameter { K1 = 0, K2 = 1, FovLimit = 2, Ipd = 3, ScreenToLens = 4, VerticalOffset = 5 }
+    public enum LensParameter { K1 = 0, K2 = 1, FovLimit = 2, Ipd = 3, ScreenToLens = 4, VerticalOffset = 5, LensSpacing = 6 }
 
     /// <summary>One tunable value: label, unit, limits and step, all in the units shown on screen (mm, degrees).</summary>
     public sealed class LensParameterSpec
@@ -56,6 +56,7 @@ namespace DiyVr.Stereo.LensTool
             new LensParameterSpec(LensParameter.Ipd, "Eye spacing (IPD)", "mm", 50, 80, 0.5, 1, p => p.ipd * 1000.0, (p, v) => p.ipd = (float)(v / 1000.0)),
             new LensParameterSpec(LensParameter.ScreenToLens, "Screen to lens", "mm", 20, 100, 0.5, 1, p => p.screenToLensDistance * 1000.0, (p, v) => p.screenToLensDistance = (float)(v / 1000.0)),
             new LensParameterSpec(LensParameter.VerticalOffset, "Vertical alignment", "mm", -20, 20, 0.5, 1, p => p.lensCenterYOffset * 1000.0, (p, v) => p.lensCenterYOffset = (float)(v / 1000.0)),
+            new LensParameterSpec(LensParameter.LensSpacing, "Lens spacing", "mm", 45, 75, 0.5, 1, p => p.lensSpacing * 1000.0, (p, v) => p.lensSpacing = (float)(v / 1000.0)),
         };
 
         public static LensParameterSpec Get(LensParameter id) { return All[(int)id]; }

@@ -13,7 +13,7 @@ namespace DiyVr.Tests
         {
             return new StereoParams
             {
-                ScreenWidth = 0.12, ScreenHeight = 0.06, Ipd = 0.06, ScreenToLens = 0.04,
+                ScreenWidth = 0.12, ScreenHeight = 0.06, Ipd = 0.06, LensSpacing = 0.06, ScreenToLens = 0.04,
                 LensCenterYOffset = 0, K1 = 0, K2 = 0, MaxHalfFovRadians = 80 * System.Math.PI / 180.0
             };
         }
@@ -36,7 +36,7 @@ namespace DiyVr.Tests
             // ipd 0.064, screen width 0.12, d = 0.04. Left lens at x = -0.032.
             // Outer (left) edge: 0.06 - 0.032 = 0.028 m -> tan 0.7. Inner (right) edge: 0.032 m -> tan 0.8.
             var p = Plain();
-            p.Ipd = 0.064;
+            p.LensSpacing = 0.064;
             var l = StereoGeometry.ComputeEye(p, EyeSide.Left);
             var r = StereoGeometry.ComputeEye(p, EyeSide.Right);
             Assert.AreEqual(-0.7, l.TanLeft, 1e-9);
@@ -113,7 +113,7 @@ namespace DiyVr.Tests
         public void Projection_IsAsymmetricAndMatchesFrustum()
         {
             var p = Plain();
-            p.Ipd = 0.064;
+            p.LensSpacing = 0.064;
             var g = StereoGeometry.ComputeEye(p, EyeSide.Left);
             var m = StereoGeometry.Projection(g, 0.1f, 100f);
             // For a frustum, m[0,0] = 2n/(r-l) = 2/(0.8+0.7) and m[0,2] = (r+l)/(r-l) = 0.1/1.5
@@ -141,6 +141,38 @@ namespace DiyVr.Tests
             {
                 Object.DestroyImmediate(mesh);
             }
+        }
+
+        [Test]
+        public void LensCentres_MoveWithLensSpacing_NotWithIpd()
+        {
+            var p = Plain();
+            p.LensSpacing = 0.064;
+            p.Ipd = 0.060;
+            var l1 = StereoGeometry.ComputeEye(p, EyeSide.Left);
+            var r1 = StereoGeometry.ComputeEye(p, EyeSide.Right);
+            Assert.AreEqual(-0.032f, l1.LensCenter.x, 1e-6f);
+            Assert.AreEqual(0.032f, r1.LensCenter.x, 1e-6f);
+            p.Ipd = 0.075; // changing eye spacing must not move anything on screen
+            var l2 = StereoGeometry.ComputeEye(p, EyeSide.Left);
+            Assert.AreEqual(l1.LensCenter.x, l2.LensCenter.x, 1e-9f);
+            Assert.AreEqual(l1.TanLeft, l2.TanLeft, 1e-12);
+            Assert.AreEqual(l1.TanRight, l2.TanRight, 1e-12);
+            p.LensSpacing = 0.070; // changing lens spacing does move them
+            var l3 = StereoGeometry.ComputeEye(p, EyeSide.Left);
+            Assert.AreEqual(-0.035f, l3.LensCenter.x, 1e-6f);
+        }
+
+        [Test]
+        public void DefaultProfile_HasLensSpacing63p9mm()
+        {
+            var profile = LensProfile.CreateDefault();
+            try
+            {
+                Assert.AreEqual(0.0639f, profile.lensSpacing, 1e-7f);
+                Assert.AreEqual(0.0639, profile.ToParams().LensSpacing, 1e-6);
+            }
+            finally { Object.DestroyImmediate(profile); }
         }
 
         [Test]
