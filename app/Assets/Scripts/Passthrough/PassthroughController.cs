@@ -35,6 +35,8 @@ namespace DiyVr.Passthrough
         private GameObject _leftQuad, _rightQuad;
         private Mesh _leftMesh, _rightMesh;
         private bool _wasVisible;
+        private bool _askedAtFirstTracking;
+        private Coroutine _lateRequest;
 
         public PassthroughMode Mode { get { return _state.Mode; } }
         public bool IsVisible { get { return _state.IsVisible; } }
@@ -59,17 +61,48 @@ namespace DiyVr.Passthrough
         {
             _rig = GetComponent<StereoRig>();
             _wasVisible = false;
+            _state.ModeChanged += OnModeChanged;
         }
 
         private void OnDisable()
         {
+            _state.ModeChanged -= OnModeChanged;
+            _lateRequest = null;
             if (_driver != null) _driver.TrackingChanged -= OnTrackingChanged;
             _driver = null;
             HideVisuals();
             DestroyVisuals();
         }
 
-        private void OnTrackingChanged(bool tracking) { _state.SetTracking(tracking); }
+        private void OnTrackingChanged(bool tracking)
+        {
+            _state.SetTracking(tracking);
+            AskOnFirstTracking(tracking);
+        }
+
+        // Camera passthrough makes Android drop the display to 60 Hz; ask for the best mode again once the view is hidden.
+        private void OnModeChanged(PassthroughMode mode)
+        {
+            if (mode != PassthroughMode.Off) return;
+            AppBootstrap.RequestHighestRefreshRate();
+            // The camera background may only be torn down a frame later, so ask once more after a second.
+            if (_lateRequest != null) StopCoroutine(_lateRequest);
+            _lateRequest = StartCoroutine(RequestAgainLater());
+        }
+
+        private System.Collections.IEnumerator RequestAgainLater()
+        {
+            yield return new WaitForSecondsRealtime(1f);
+            _lateRequest = null;
+            if (!_state.IsVisible) AppBootstrap.RequestHighestRefreshRate();
+        }
+
+        private void AskOnFirstTracking(bool tracking)
+        {
+            if (!tracking || _askedAtFirstTracking) return;
+            _askedAtFirstTracking = true;
+            AppBootstrap.RequestHighestRefreshRate();
+        }
 
         private void Update()
         {
@@ -81,6 +114,7 @@ namespace DiyVr.Passthrough
                 {
                     _driver.TrackingChanged += OnTrackingChanged;
                     _state.SetTracking(_driver.IsTracking);
+                    AskOnFirstTracking(_driver.IsTracking);
                 }
             }
             ReadTaps();

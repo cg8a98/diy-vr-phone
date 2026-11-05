@@ -108,6 +108,7 @@ namespace DiyVr.Diagnostics
             _sb.Append("Display ").Append(Screen.currentResolution.refreshRateRatio.value.ToString("0")).Append(" Hz (asked ")
                .Append(AppBootstrap.RequestedHz > 0 ? AppBootstrap.RequestedHz.ToString("0") : "none")
                .Append(", mode ").Append(AndroidDisplayMode.RequestedModeId)
+               .Append(", req ").Append(AppBootstrap.DisplayRequests)
                .Append(string.IsNullOrEmpty(AndroidDisplayMode.LastError) ? ")" : ") err").Append('\n');
             _sb.Append("Tracking ").Append(ARSession.state);
             if (ARSession.state == ARSessionState.SessionInitializing || ARSession.state == ARSessionState.SessionTracking)
