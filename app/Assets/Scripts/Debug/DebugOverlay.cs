@@ -1,5 +1,6 @@
 using System.Text;
 using DiyVr.Core;
+using DiyVr.Tracking;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.ARFoundation;
@@ -26,6 +27,7 @@ namespace DiyVr.Diagnostics
         private string _thermalLabel = ThermalStatusReader.UnavailableLabel;
         private float _nextThermalPoll;
         private ARCameraManager _cameraManager;
+        private HeadPoseDriver _headPose;
         private string _cameraLabel = "n/a";
         private string _text = string.Empty;
         private GUIStyle _style;
@@ -124,10 +126,36 @@ namespace DiyVr.Diagnostics
             if (ARSession.state == ARSessionState.SessionInitializing || ARSession.state == ARSessionState.SessionTracking)
                 _sb.Append(" / ").Append(ARSession.notTrackingReason);
             _sb.Append('\n');
+            AppendLossHistory(_sb);
             _sb.Append("Camera ").Append(_cameraLabel).Append('\n');
             _sb.Append("Thermal ").Append(_thermalLabel).Append('\n');
             _sb.Append("Build ").Append(Application.version);
             return _sb.ToString();
+        }
+
+        // "Lost 3x, last InsufficientFeatures 12s ago for 0.4s, jump 8cm 2deg (max 15cm), drift 0.3 cm/s" (1.20).
+        private void AppendLossHistory(StringBuilder sb)
+        {
+            if (_headPose == null) _headPose = FindFirstObjectByType<HeadPoseDriver>();
+            TrackingHistory h = _headPose != null ? _headPose.History : null;
+            if (h == null)
+            {
+                sb.Append("Lost n/a\n");
+                return;
+            }
+            sb.Append("Lost ").Append(h.LossCount).Append('x');
+            if (h.LossCount > 0)
+            {
+                double ago = Time.unscaledTimeAsDouble - h.LastLossStartTime;
+                sb.Append(", last ").Append(string.IsNullOrEmpty(h.LastLossReason) ? "?" : h.LastLossReason)
+                  .Append(' ').Append(ago.ToString("0")).Append("s ago for ")
+                  .Append(h.LastLossSeconds.ToString("0.0")).Append(h.InLoss ? "s+" : "s");
+                if (!h.InLoss || h.MaxJumpCm > 0f)
+                    sb.Append(", jump ").Append(h.LastJumpCm.ToString("0")).Append("cm ")
+                      .Append(h.LastJumpDeg.ToString("0")).Append("deg (max ")
+                      .Append(h.MaxJumpCm.ToString("0")).Append("cm)");
+            }
+            sb.Append(", drift ").Append(h.DriftCmPerSec.ToString("0.0")).Append(" cm/s\n");
         }
 
         private void OnGUI()

@@ -3,6 +3,7 @@
     "rootNamespace": "DiyVr.Diagnostics",
     "references": [
         "DiyVr.Runtime",
+        "DiyVr.Tracking",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
         "Unity.InputSystem"

@@ -25,6 +25,7 @@ namespace DiyVr.Tracking
         public bool lockFocus = true;
 
         private HeadPoseTracker _tracker;
+        private readonly TrackingHistory _history = new TrackingHistory();
         private GameObject _arRoot;
         private Camera _arCamera;
         private RenderTexture _arDummyRt;
@@ -37,6 +38,8 @@ namespace DiyVr.Tracking
 
         /// <summary>Tracker access for the debug overlay (1.7) and passthrough (1.8).</summary>
         public HeadPoseTracker Tracker { get { return _tracker; } }
+        /// <summary>Tracking-loss log for the debug overlay (1.20). Diagnostic only; never changes the pose.</summary>
+        public TrackingHistory History { get { return _history; } }
         /// <summary>The AR camera (pose source). Null until enabled. Passthrough (1.8) attaches the camera background to it.</summary>
         public Camera ArCamera { get { return _arCamera; } }
         /// <summary>True while ARCore tracks well. False means the pose is being held.</summary>
@@ -136,6 +139,14 @@ namespace DiyVr.Tracking
                 && ARSession.notTrackingReason == NotTrackingReason.None;
         }
 
+        // The reason tracking is not good: ARCore's notTrackingReason, or the session state when that reads None.
+        private static string NotTrackingReasonLabel()
+        {
+            NotTrackingReason reason = ARSession.notTrackingReason;
+            if (reason != NotTrackingReason.None) return reason.ToString();
+            return ARSession.state.ToString();
+        }
+
         // Switches to a higher-frame-rate camera configuration only if one exists; otherwise keeps the default, once the camera subsystem reports any.
         private void TrySelectCameraConfiguration()
         {
@@ -192,7 +203,10 @@ namespace DiyVr.Tracking
             TrySelectCameraConfiguration();
             if (_tracker == null || _arCamera == null) return;
             Transform t = _arCamera.transform;
-            _tracker.Update(Time.unscaledTimeAsDouble, t.position, t.rotation, ArTracking());
+            bool tracking = ArTracking();
+            double now = Time.unscaledTimeAsDouble;
+            History.OnFrame(now, tracking, tracking ? string.Empty : NotTrackingReasonLabel(), t.position, t.rotation);
+            _tracker.Update(now, t.position, t.rotation, tracking);
             if (_tracker.HasPose) transform.SetPositionAndRotation(_tracker.Position, _tracker.Rotation);
         }
     }
