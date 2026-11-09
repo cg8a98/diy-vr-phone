@@ -71,7 +71,10 @@ namespace DiyVr.Updater
             if (_parts == null) return "?";
             int n = 4;
             while (n > 2 && _parts[n - 1] == 0) n--;
-            return string.Join(".", _parts, 0, n);
+            // string.Join(".", int[], 0, n) binds to the params object[] overload and prints "System.Int32[]".
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < n; i++) { if (i > 0) sb.Append('.'); sb.Append(_parts[i]); }
+            return sb.ToString();
         }
     }
 
