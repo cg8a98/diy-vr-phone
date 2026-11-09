@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Application.temporaryCachePath is the external cache folder when there is one, otherwise the internal cache. -->
+<paths>
+    <external-cache-path name="updates_external" path="updates/" />
+    <cache-path name="updates_internal" path="updates/" />
+</paths>

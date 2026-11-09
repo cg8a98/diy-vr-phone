@@ -8,6 +8,7 @@
         "DiyVr.Debug",
         "DiyVr.Passthrough",
         "DiyVr.LensTool",
+        "DiyVr.Updater",
         "Unity.InputSystem"
     ],
     "includePlatforms": [],
