@@ -11,7 +11,7 @@ Carlos only, for now. After v2 works, revisit open source, selling print files f
 ## Platform and setup
 - **Phone:** Galaxy S23 Ultra (Android). Other phones come later.
 - **PC:** Windows 11, Ryzen 9800X3D, Radeon RX 9070 XT, 1 GbE wired. Steam installed; SteamVR still to install.
-- **Network:** AT&T router now (Wi-Fi 6E support unknown). Planned TP-Link Deco BE63 Wi-Fi 7 mesh, which gives the phone its 6 GHz band.
+- **Network:** home router (Wi-Fi 6E support unknown); a Wi-Fi 7 mesh with a 6 GHz band is planned. Details in the private folder.
 - **Media:** Jellyfin server on a laptop with attached storage (4K and 1080p). 3D content to be sourced later.
 - **Tools:** no printer or soldering gear yet (a Bambu P1S + AMS 2 Pro and a soldering kit are planned). SolidWorks skills; moving to Fusion 360 is optional.
 
@@ -30,7 +30,7 @@ The mesh gives automatic play-area boundaries, makes virtual objects collide wit
 **v3, spatial peripherals:** DIY 6DoF hand controllers (for example HadesVR or ESP32-based trackers) and haptic feedback gloves (OpenGloves or SenseShift firmware). The haptic gloves are a high-wish feature, deliberately placed after the core functions work.
 
 ## Constraints
-- **Budget:** spend as little as possible now and buy parts gradually. About $180 for v1+v2 is a soft target and can go a little over. v0 costs about $20–30.
+- **Budget:** spend as little as possible now and buy parts gradually. Figures are kept in the private folder (`private\budget.md`).
 - **Time:** no deadline and no fixed hours. Set a schedule once the printer arrives.
 - **Skills:** Claude writes all the software. Carlos does CAD, printing, assembly and the hands-on electronics work (soldering, wiring), with Claude guiding every electronics step in detail so he learns as he goes.
 
@@ -55,4 +55,4 @@ The mesh gives automatic play-area boundaries, makes virtual objects collide wit
 - **Room-scan quality without LiDAR:** photo scans can miss thin or plain surfaces (glass, white walls). The live depth warnings cover those gaps.
 
 ## Measurements
-- **IPD (eye spacing):** about 66–67 mm. That's near the middle of the 58–72 mm adjustment range, so the default lens spacing is 66.5 mm.
+- **IPD (eye spacing):** measured; the value lives in the private folder and in the lens profile on the phone. The repo default lens spacing is 66.5 mm, the middle of the usual range.
