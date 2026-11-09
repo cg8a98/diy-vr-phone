@@ -1,0 +1,25 @@
+{
+    "name": "DiyVr.Tests.EditMode.Interaction",
+    "rootNamespace": "DiyVr.Tests.Interaction",
+    "references": [
+        "DiyVr.Interaction",
+        "DiyVr.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
