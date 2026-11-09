@@ -1,5 +1,6 @@
 using System.Text;
 using DiyVr.Core;
+using DiyVr.Hands;
 using DiyVr.Stereo;
 using DiyVr.Tracking;
 using UnityEngine;
@@ -131,6 +132,7 @@ namespace DiyVr.Diagnostics
             _sb.Append('\n');
             AppendLossHistory(_sb);
             _sb.Append("Camera ").Append(_cameraLabel).Append('\n');
+            _sb.Append(HandsStatus.Line()).Append('\n');
             _sb.Append("Thermal ").Append(_thermalLabel).Append('\n');
             _sb.Append("Build ").Append(Application.version);
             return _sb.ToString();

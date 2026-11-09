@@ -4,6 +4,7 @@
     "references": [
         "DiyVr.Runtime",
         "DiyVr.Tracking",
+        "DiyVr.Hands.Core",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
         "Unity.InputSystem",

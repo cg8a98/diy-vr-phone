@@ -33,6 +33,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
+      - name: MediaPipe download cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/Packages/com.github.homuler.mediapipe-0.16.3.tgz
+            app/Assets/StreamingAssets/hand_landmarker.task
+          key: mediapipe-0.16.3-${{ hashFiles('scripts/fetch-mediapipe.sh') }}
+      - name: Fetch MediaPipe package and hand model
+        run: scripts/fetch-mediapipe.sh
       - uses: actions/cache@v4
         with:
           path: app/Library
@@ -65,6 +74,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
+      - name: MediaPipe download cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/Packages/com.github.homuler.mediapipe-0.16.3.tgz
+            app/Assets/StreamingAssets/hand_landmarker.task
+          key: mediapipe-0.16.3-${{ hashFiles('scripts/fetch-mediapipe.sh') }}
+      - name: Fetch MediaPipe package and hand model
+        run: scripts/fetch-mediapipe.sh
       - uses: actions/cache@v4
         with:
           path: app/Library

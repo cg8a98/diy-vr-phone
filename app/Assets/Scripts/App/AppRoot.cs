@@ -1,4 +1,5 @@
 using DiyVr.Diagnostics;
+using DiyVr.Hands;
 using DiyVr.Passthrough;
 using DiyVr.Stereo;
 using DiyVr.Stereo.LensTool;
@@ -35,6 +36,7 @@ namespace DiyVr.App
                 go.SetActive(false);
                 rig = go.AddComponent<StereoRig>();
                 go.AddComponent<HeadPoseDriver>();
+                go.AddComponent<HandTrackingService>();
                 go.AddComponent<PassthroughController>();
                 go.AddComponent<LensToolController>().rig = rig;
                 go.SetActive(true);
@@ -42,6 +44,7 @@ namespace DiyVr.App
             else
             {
                 AddIfMissing<HeadPoseDriver>(rig.gameObject);
+                AddIfMissing<HandTrackingService>(rig.gameObject);
                 AddIfMissing<PassthroughController>(rig.gameObject);
                 var lens = Object.FindFirstObjectByType<LensToolController>();
                 if (lens == null) rig.gameObject.AddComponent<LensToolController>().rig = rig;

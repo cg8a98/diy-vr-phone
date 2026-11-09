@@ -27,6 +27,11 @@ private/
 *.p12
 *.pfx
 
+# MediaPipe files downloaded by scripts/fetch-mediapipe.sh (too big for git; CI downloads them)
+app/Packages/com.github.homuler.mediapipe-*.tgz
+app/Assets/StreamingAssets/hand_landmarker.task
+app/Assets/StreamingAssets/hand_landmarker.task.meta
+
 # Unity (app/)
 app/[Ll]ibrary/
 app/[Tt]emp/

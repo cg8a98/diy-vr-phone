@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.github.homuler.mediapipe": "file:com.github.homuler.mediapipe-0.16.3.tgz",
     "com.unity.inputsystem": "1.14.0",
     "com.unity.render-pipelines.universal": "17.0.4",
     "com.unity.test-framework": "1.5.1",
