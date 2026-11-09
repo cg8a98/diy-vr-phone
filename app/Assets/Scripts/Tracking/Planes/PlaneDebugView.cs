@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace DiyVr.Tracking
 {
@@ -14,7 +15,7 @@ namespace DiyVr.Tracking
     {
         /// <summary>True while plane visuals are shown. Default false.</summary>
         public static bool Visible { get; private set; }
-        /// <summary>Number of planes currently tracked.</summary>
+        /// <summary>Number of live planes: tracking and not merged into another plane.</summary>
         public static int PlaneCount { get; private set; }
         /// <summary>Height (world Y) of the lowest tracked plane; 0 when none.</summary>
         public static float LowestHeight { get; private set; }
@@ -34,7 +35,9 @@ namespace DiyVr.Tracking
             if (planeManager != null)
             {
                 foreach (ARPlane p in planeManager.trackables)
-                    if (p != null) _heights.Add(p.transform.position.y);
+                    if (p != null && PlaneClassifier.IsLivePlane(p.subsumedBy != null,
+                        p.trackingState == TrackingState.Tracking, p.trackableId != TrackableId.invalidId))
+                        _heights.Add(p.transform.position.y);
             }
             PlaneCount = _heights.Count;
             LowestHeight = PlaneClassifier.LowestHeight(_heights);
