@@ -183,7 +183,7 @@ This plan assumes a Pro plan; tell Claude if you're on another plan and this sec
 - **Before every merge, the PM checks:** CI is green, there's no new permission or network access that isn't explained, camera and hand data stay on the device, and no secrets are in the code.
 
 ## 7. Release and delivery
-- **Getting builds:** every merge to `main` publishes a numbered GitHub release. Carlos downloads the APK on the phone and installs it over the old version, and his settings are kept because every build uses the same signing key. APKs from pull requests are available for testing a change before it's merged. An in-app updater comes when the repository goes public.
+- **Getting builds:** every merge to `main` publishes a numbered GitHub release. Carlos downloads the APK on the phone and installs it over the old version, and his settings are kept because every build uses the same signing key. APKs from pull requests are available for testing a change before it's merged. The repository is public, so the app also offers each new release itself at launch: press A or tap the screen to install (Android asks once to allow installs from this app).
 - **Versions:** v0.x during the test-headset phase, v1.x with printed hardware, v2.x with electronics. Each merged milestone gets a tagged GitHub release with an APK and short notes.
 - **PC side:** setup steps and settings files live in `pc/`.
 - **Hardware:** releases include the print files and the bill of materials.

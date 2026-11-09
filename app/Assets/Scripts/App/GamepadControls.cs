@@ -4,6 +4,7 @@ using DiyVr.Passthrough;
 using DiyVr.Stereo;
 using DiyVr.Stereo.LensTool;
 using DiyVr.Tracking;
+using DiyVr.Updater;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -26,6 +27,7 @@ namespace DiyVr.App
         public const int BigStep = 10;
 
         private PlaneDebugView _planes;
+        private bool _maskAB; // A/B stay ignored until released after the update prompt closes
         private readonly GamepadMapper _mapper = new GamepadMapper();
         private readonly List<GamepadAction> _actions = new List<GamepadAction>(8);
 
@@ -49,6 +51,12 @@ namespace DiyVr.App
                 RightShoulder = pad.rightShoulder.isPressed,
                 RightStick = pad.rightStickButton.isPressed,
             };
+
+            // The update prompt owns A (install) and B (later) while it is showing; hide them from the mapper,
+            // and keep hiding them until released so closing the prompt does not also place a cube / close the lens tool.
+            bool prompt = UpdatePrompt.IsOpen;
+            if (_maskAB && !prompt && !b.A && !b.B) _maskAB = false;
+            if (prompt || _maskAB) { _maskAB = true; b.A = false; b.B = false; }
 
             _actions.Clear();
             _mapper.Update(b, lens != null && lens.IsOpen, Time.unscaledDeltaTime, _actions);
