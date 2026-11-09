@@ -30,6 +30,7 @@ namespace DiyVr.Tracking
         private Camera _arCamera;
         private RenderTexture _arDummyRt;
         private ARCameraManager _cameraManager;
+        private GameObject _planeTemplate;
         private bool _configDone;
         private float _nextConfigTry;
 
@@ -66,6 +67,8 @@ namespace DiyVr.Tracking
             if (_tracker != null) _tracker.TrackingChanged -= OnTrackingChanged;
             if (_arRoot != null) Destroy(_arRoot);
             if (_arDummyRt != null) Destroy(_arDummyRt);
+            if (_planeTemplate != null) Destroy(_planeTemplate);
+            _planeTemplate = null;
             _arRoot = null; _arCamera = null; _arDummyRt = null; _cameraManager = null;
             _configDone = false; ChosenCameraFps = 0;
         }
@@ -121,6 +124,14 @@ namespace DiyVr.Tracking
             origin.CameraFloorOffsetObject = offset;
             origin.Camera = _arCamera;
             origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Device;
+
+            // Horizontal plane detection (desk, floor). Visual only: nothing here reads planes into the head pose.
+            _planeTemplate = PlanePrefabFactory.Create();
+            _planeTemplate.transform.SetParent(transform, false);
+            var planeManager = _arRoot.AddComponent<ARPlaneManager>();
+            planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
+            planeManager.planePrefab = _planeTemplate;
+            _arRoot.AddComponent<PlaneDebugView>().planeManager = planeManager;
 
             _arRoot.SetActive(true);
         }

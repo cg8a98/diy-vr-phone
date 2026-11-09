@@ -17,6 +17,7 @@ namespace DiyVr.App
         PlaceCube,
         TogglePassthrough,
         ToggleOverlay,
+        TogglePlanes,
     }
 
     /// <summary>Snapshot of the controller buttons for one frame (true = held down).</summary>
@@ -25,6 +26,7 @@ namespace DiyVr.App
         public bool Y, A, B, X, View;
         public bool DpadUp, DpadDown, DpadLeft, DpadRight;
         public bool LeftShoulder, RightShoulder;
+        public bool RightStick; // right stick click
     }
 
     /// <summary>
@@ -55,6 +57,7 @@ namespace DiyVr.App
             if (Pressed(now.Y, _prev.Y)) actions.Add(GamepadAction.ToggleLensTool);
             if (Pressed(now.X, _prev.X)) actions.Add(GamepadAction.TogglePassthrough);
             if (Pressed(now.View, _prev.View)) actions.Add(GamepadAction.ToggleOverlay);
+            if (Pressed(now.RightStick, _prev.RightStick)) actions.Add(GamepadAction.TogglePlanes);
 
             // Left and right together cancel each other.
             bool left = now.DpadLeft && !now.DpadRight;

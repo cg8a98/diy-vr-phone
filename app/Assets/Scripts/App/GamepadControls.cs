@@ -3,6 +3,7 @@ using DiyVr.Diagnostics;
 using DiyVr.Passthrough;
 using DiyVr.Stereo;
 using DiyVr.Stereo.LensTool;
+using DiyVr.Tracking;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,6 +25,7 @@ namespace DiyVr.App
         /// <summary>Calls LensToolController.Adjust this many times for LB/RB.</summary>
         public const int BigStep = 10;
 
+        private PlaneDebugView _planes;
         private readonly GamepadMapper _mapper = new GamepadMapper();
         private readonly List<GamepadAction> _actions = new List<GamepadAction>(8);
 
@@ -45,6 +47,7 @@ namespace DiyVr.App
                 DpadRight = pad.dpad.right.isPressed,
                 LeftShoulder = pad.leftShoulder.isPressed,
                 RightShoulder = pad.rightShoulder.isPressed,
+                RightStick = pad.rightStickButton.isPressed,
             };
 
             _actions.Clear();
@@ -70,6 +73,10 @@ namespace DiyVr.App
                 case GamepadAction.PlaceCube: if (testContent != null) testContent.PlaceCubeInFront(); break;
                 case GamepadAction.TogglePassthrough: if (passthrough != null) passthrough.Toggle(); break;
                 case GamepadAction.ToggleOverlay: if (overlay != null) overlay.Toggle(); break;
+                case GamepadAction.TogglePlanes:
+                    if (_planes == null) _planes = FindFirstObjectByType<PlaneDebugView>();
+                    if (_planes != null) _planes.Toggle();
+                    break;
             }
         }
     }
