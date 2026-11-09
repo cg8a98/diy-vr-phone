@@ -44,8 +44,9 @@ android {
     // Include libc++_shared.so
     task copyLibcppShared {
         doLast {
-            def ndkDir = android.ndkDirectory
-            def abiFilters = android.defaultConfig.ndk.abiFilters
+            // Newer Android Gradle Plugin removed android.ndkDirectory; Unity fills in the NDK path here.
+            def ndkDir = "**NDKPATH**"
+            def abiFilters = ['arm64-v8a'] // the app only ships ARM64
             def destDir = file("$projectDir/src/main/jniLibs")
 
             // Mapping from ABI to architecture triple (for NDK 23+)
@@ -100,7 +101,7 @@ android {
                 }
 
                 if (!copied) {
-                    logger.warn("Could not find libc++_shared.so for $abi in NDK")
+                    throw new GradleException("Could not find libc++_shared.so for $abi in NDK $ndkDir") // fail the build, not the app at runtime
                 }
             }
         }
@@ -109,7 +110,7 @@ android {
     task cleanCopyLibcppShared {
         doLast {
             def destDir = file("$projectDir/src/main/jniLibs")
-            def abiFilters = android.defaultConfig.ndk.abiFilters
+            def abiFilters = ['arm64-v8a'] // the app only ships ARM64
 
             abiFilters.each { abi ->
                 def libcppFile = file("$destDir/$abi/libc++_shared.so")
