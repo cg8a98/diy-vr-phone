@@ -58,16 +58,13 @@ namespace DiyVr.App
 
             // While the camera view is on, hide the opaque test grids so the camera image is not covered.
             var passthrough = Object.FindFirstObjectByType<PassthroughController>();
-            var lensTool = Object.FindFirstObjectByType<LensToolController>();
             var testContent = Object.FindFirstObjectByType<StereoTestContent>();
             if (passthrough != null)
             {
                 if (testContent != null) testContent.SetGridVisible(SceneVisibility.TestGridVisible(passthrough.IsVisible));
-                if (lensTool != null) lensTool.SetGridSuppressed(passthrough.IsVisible);
                 passthrough.VisibilityChanged += visible =>
                 {
                     if (testContent != null) testContent.SetGridVisible(SceneVisibility.TestGridVisible(visible));
-                    if (lensTool != null) lensTool.SetGridSuppressed(visible);
                 };
             }
 

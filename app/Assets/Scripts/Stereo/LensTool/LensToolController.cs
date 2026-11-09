@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using DiyVr.Core;
+using DiyVr.Stereo;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -22,9 +23,9 @@ namespace DiyVr.Stereo.LensTool
         public StereoRig rig;
         public bool startOpen;
         [Tooltip("Distance in front of the head, metres.")]
-        public float panelDistance = 0.8f;
+        public float panelDistance = PanelPlacement.LensPanelDistance;
         [Tooltip("Panel width in metres at that distance.")]
-        public float panelWidth = 0.7f;
+        public float panelWidth = PanelPlacement.LensPanelWidth;
 
         private const int RowProfile = 0;                       // row 0 = profile chooser, rows 1.. = LensParameters.All
         private static int RowCount { get { return LensParameters.All.Length + 1; } }
@@ -35,12 +36,11 @@ namespace DiyVr.Stereo.LensTool
         private string _profileName;
         private int _row;
         private bool _open;
-        private bool _gridSuppressed;
         private bool _dirty;
         private string _status = "";
         private float _statusUntil;
         private GestureRecognizer _gestures;
-        private GameObject _panel, _grid;
+        private GameObject _panel;
         private Text _text;
         private List<string> _names = new List<string>();
         private int _nameIndex;                                  // index in _names; _names.Count = "+ new copy"
@@ -79,7 +79,6 @@ namespace DiyVr.Stereo.LensTool
             if (_open) GestureArbiter.Shared.LensToolOpen = false;
             if (_working != null) Destroy(_working);
             if (_panel != null) Destroy(_panel);
-            if (_grid != null) Destroy(_grid);
         }
 
         private void Update()
@@ -137,7 +136,6 @@ namespace DiyVr.Stereo.LensTool
             GestureArbiter.Shared.LensToolOpen = true;
             EnsurePanel();
             _panel.SetActive(true);
-            ApplyGridVisibility();
             RefreshNames();
             UpdateText();
         }
@@ -147,22 +145,6 @@ namespace DiyVr.Stereo.LensTool
             _open = false;
             GestureArbiter.Shared.LensToolOpen = false;
             if (_panel != null) _panel.SetActive(false);
-            ApplyGridVisibility();
-        }
-
-        /// <summary>
-        /// Hides the lens tool grid while the camera view is on (the grid is opaque and would cover the camera image).
-        /// The panel stays visible. Safe to call before the grid exists; it applies when the tool opens.
-        /// </summary>
-        public void SetGridSuppressed(bool suppressed)
-        {
-            _gridSuppressed = suppressed;
-            ApplyGridVisibility();
-        }
-
-        private void ApplyGridVisibility()
-        {
-            if (_grid != null) _grid.SetActive(SceneVisibility.LensGridVisible(_gridSuppressed, _open));
         }
 
         public void SelectNext() { _row = (_row + 1) % RowCount; UpdateText(); }
@@ -309,18 +291,6 @@ namespace DiyVr.Stereo.LensTool
             var txRt = tx.GetComponent<RectTransform>();
             txRt.anchorMin = Vector2.zero; txRt.anchorMax = Vector2.one;
             txRt.offsetMin = new Vector2(40f, 20f); txRt.offsetMax = new Vector2(-40f, -20f);
-
-            // Test grid behind the panel: straight lines must look straight at the edges.
-            _grid = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            _grid.name = "LensToolGrid";
-            var col = _grid.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-            _grid.transform.SetParent(head, false);
-            _grid.transform.localPosition = new Vector3(0f, 0f, 2.4f);
-            _grid.transform.localScale = new Vector3(6f, 3f, 1f);
-            var shader = rig.unlitShader != null ? rig.unlitShader : Shader.Find("DiyVr/StereoUnlit");
-            var mat = new Material(shader) { mainTexture = StereoTestContent.MakeGridTexture(1024, 512, 16) };
-            _grid.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
     }
 }

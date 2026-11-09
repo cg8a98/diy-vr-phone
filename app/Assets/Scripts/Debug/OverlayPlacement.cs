@@ -1,21 +1,23 @@
+using DiyVr.Stereo;
 using UnityEngine;
 
 namespace DiyVr.Diagnostics
 {
     /// <summary>
     /// Where the head-locked debug panel sits, in the head (StereoRig) frame. Pure maths so it can be tested.
-    /// The lens tool panel is centred at 0.8 m and its bottom edge is atan(0.225/0.8) = 15.7 degrees below straight ahead;
+    /// Both panels sit near the test grid's depth (2 m) so the eyes do not refocus. The lens tool panel is centred
+    /// straight ahead and its bottom edge is about 15.6 degrees below straight ahead (PanelPlacement);
     /// the debug panel must stay entirely below that.
     /// </summary>
     public static class OverlayPlacement
     {
-        public const float Distance = 1.2f;
-        public const float DegreesDown = 25f;
-        public const float Width = 0.75f;
-        public const float Height = 0.24f;
+        public const float Distance = 2.0f;
+        public const float DegreesDown = 22f;
+        public const float Width = 0.75f * 2.0f / 1.2f;      // same angular size as at 1.2 m
+        public const float Height = 0.24f * 2.0f / 1.2f;
 
         /// <summary>Bottom edge of the lens tool panel, degrees below straight ahead.</summary>
-        public static readonly float LensPanelBottomDegrees = Mathf.Atan(0.225f / 0.8f) * Mathf.Rad2Deg;
+        public static readonly float LensPanelBottomDegrees = PanelPlacement.LensPanelBottomDegrees();
 
         public static Vector3 LocalPosition(float distance, float degreesDown)
         {
