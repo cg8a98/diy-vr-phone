@@ -4,6 +4,7 @@
     "references": [
         "DiyVr.Runtime",
         "DiyVr.Tracking",
+        "DiyVr.Hands",
         "DiyVr.Debug",
         "DiyVr.Passthrough",
         "DiyVr.LensTool",
