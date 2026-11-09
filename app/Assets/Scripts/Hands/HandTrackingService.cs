@@ -318,7 +318,7 @@ namespace DiyVr.Hands
             }
             if (_landmarker != null)
             {
-                try { _landmarker.Dispose(); } catch (Exception e) { Debug.LogException(e); }
+                try { ((IDisposable)_landmarker).Dispose(); } // Dispose is an explicit interface method (it also calls Close) catch (Exception e) { Debug.LogException(e); }
                 _landmarker = null;
             }
             if (_buffer.IsCreated) _buffer.Dispose();
