@@ -3,6 +3,7 @@
     "rootNamespace": "DiyVr.Tests.Diagnostics",
     "references": [
         "DiyVr.Debug",
+        "DiyVr.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
