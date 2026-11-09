@@ -146,5 +146,15 @@ namespace DiyVr.Tests
             Step(right, false, 0.5f);
             Assert.That(Step(right, true, 0.5f), Is.Empty);
         }
+
+        [Test]
+        public void RightStick_TogglesPlanes_OpenOrClosed_EdgeOnly()
+        {
+            var b = new GamepadButtons { RightStick = true };
+            Assert.That(Step(b, false), Is.EqualTo(new[] { GamepadAction.TogglePlanes }));
+            Assert.That(Step(b, false), Is.Empty);
+            Step(None, false);
+            Assert.That(Step(b, true), Is.EqualTo(new[] { GamepadAction.TogglePlanes }));
+        }
     }
 }
