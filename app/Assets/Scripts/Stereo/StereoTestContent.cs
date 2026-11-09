@@ -18,6 +18,7 @@ namespace DiyVr.Stereo
         public float cubeSize = 0.2f;
 
         private GameObject _grid;
+        private GameObject _cube;
         private bool _gridVisible = true;
 
         private void Start()
@@ -42,6 +43,26 @@ namespace DiyVr.Stereo
             if (_grid != null) _grid.SetActive(visible);
         }
 
+        /// <summary>
+        /// Moves the test cube to <paramref name="distance"/> metres ahead of the current head pose (horizontal),
+        /// <paramref name="drop"/> metres below head height. Does nothing if the cube is not built yet.
+        /// </summary>
+        public void PlaceCubeInFront(float distance = 1.5f, float drop = 0.3f)
+        {
+            if (_cube == null || head == null) return;
+            _cube.transform.SetPositionAndRotation(
+                CubePlacement(head.position, head.rotation, distance, drop),
+                Quaternion.Euler(0f, head.rotation.eulerAngles.y, 0f));
+        }
+
+        /// <summary>Pure placement maths: <see cref="CubeWorldPosition"/> lowered by <paramref name="drop"/> metres.</summary>
+        public static Vector3 CubePlacement(Vector3 headPos, Quaternion headRot, float distance, float drop)
+        {
+            Vector3 p = CubeWorldPosition(headPos, headRot, distance);
+            p.y -= drop;
+            return p;
+        }
+
         private void BuildGrid(Shader shader)
         {
             var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -58,7 +79,7 @@ namespace DiyVr.Stereo
 
         private void BuildCube(Shader shader)
         {
-            CreateCube(shader, head, cubeDistance, cubeSize);
+            _cube = CreateCube(shader, head, cubeDistance, cubeSize);
         }
 
         /// <summary>

@@ -77,6 +77,7 @@ namespace DiyVr.App
             pad.lens = Object.FindFirstObjectByType<LensToolController>();
             pad.passthrough = Object.FindFirstObjectByType<PassthroughController>();
             pad.overlay = Object.FindFirstObjectByType<DebugOverlay>();
+            pad.testContent = testContent;
         }
 
         private static void AddIfMissing<T>(GameObject go) where T : Component

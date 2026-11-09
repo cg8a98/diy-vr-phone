@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DiyVr.Diagnostics;
 using DiyVr.Passthrough;
+using DiyVr.Stereo;
 using DiyVr.Stereo.LensTool;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -18,6 +19,7 @@ namespace DiyVr.App
         public LensToolController lens;
         public PassthroughController passthrough;
         public DebugOverlay overlay;
+        public StereoTestContent testContent;
 
         /// <summary>Calls LensToolController.Adjust this many times for LB/RB.</summary>
         public const int BigStep = 10;
@@ -65,6 +67,7 @@ namespace DiyVr.App
                 case GamepadAction.AdjustDownBig: if (lens != null) for (int i = 0, n = lens.SelectedRow == 0 ? 1 : BigStep; i < n; i++) lens.Adjust(-1); break;
                 case GamepadAction.AdjustUpBig: if (lens != null) for (int i = 0, n = lens.SelectedRow == 0 ? 1 : BigStep; i < n; i++) lens.Adjust(1); break;
                 case GamepadAction.Save: if (lens != null) lens.Save(); break;
+                case GamepadAction.PlaceCube: if (testContent != null) testContent.PlaceCubeInFront(); break;
                 case GamepadAction.TogglePassthrough: if (passthrough != null) passthrough.Toggle(); break;
                 case GamepadAction.ToggleOverlay: if (overlay != null) overlay.Toggle(); break;
             }
