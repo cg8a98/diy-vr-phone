@@ -94,6 +94,19 @@ The order of milestones 4–6 can change. Carlos's baseline test (Playbook 2.2) 
 | 1.8 Passthrough toggle | Show the camera view when tracking is lost or on demand | Toggle works, and the view appears automatically when tracking is lost | Sonnet | 1.5 |
 | 1.9 Release signing and publishing | Permanent release key as a GitHub secret. Every merge to `main` builds a signed APK and publishes it as a numbered GitHub release, which Carlos downloads by hand | A merge produces a new release with an incrementing version number | Sonnet | 1.3 |
 
+**Milestone 2 tickets** (planned 2026-11-09, after Carlos passed Milestone 1 with v0.1.59)
+
+| Ticket | Goal | Acceptance criteria | Tier | Depends on |
+|---|---|---|---|---|
+| 2.1 MediaPipe spike | Add MediaPipeUnityPlugin (prebuilt release package, Android arm64) and run the hand landmarker on ARCore's CPU camera image on the phone | CI builds; overlay shows "Hands: n, landmark fps"; APK size noted; licence recorded in decisions.md | Sonnet (Opus if the native libs fight the build) | M1 |
+| 2.2 Hands in 3D | Turn the 2D landmarks into 3D points using the camera intrinsics plus a hand-size depth estimate, and draw both hands in the stereo view | Your drawn hand lines up with your real hand in camera view; unit tests for the projection maths | Sonnet | 2.1 |
+| 2.3 Pinch | Thumb-tip to index-tip distance with hysteresis and a short debounce | Pinch on/off is reliable at arm's length; unit tests for thresholds | Sonnet | 2.2 |
+| 2.4 Gaze pointer | Head-forward ray with a small reticle that highlights what you look at | Reticle sits on the target you look at; hit tests have unit tests | Sonnet | M1 |
+| 2.5 Five-button test | Five floating buttons; look and pinch to press; the app counts hits and misses | Feature-table row 3: the right button activates 9 times out of 10, hand at a comfortable height | Sonnet | 2.3, 2.4 |
+| 2.6 Place objects | ARCore plane detection plus gaze ray onto the desk; pinch places an anchored object | Feature-table row 4: the object stays on the desk while you walk around it | Sonnet | 2.5 |
+
+Hand images never leave the phone. Hand tracking runs at the camera's 30 fps at most, and its rate is one of the thermal governor's levers later (Milestone 7).
+
 Later milestones get their ticket lists when they start.
 
 ## 4. Operating model

@@ -17,3 +17,4 @@ One line each, newest first. Only decisions that change future work.
 | 2026-11-03 | Builds via GitHub Actions + GameCI; owner installs APKs, no Unity on PC needed | Owner is not a developer | Carlos |
 | 2026-11-03 | Stack: Unity 6 LTS, URP, AR Foundation + ARCore, own stereo rig with Cardboard distortion maths, MediaPipeUnityPlugin | See Build Plan section 2 | Carlos |
 | 2026-11-03 | Phasing: v0 software on cheap headset → v1 printed shell → v2 eye tracking/foveation/cooling/battery → v3 controllers + haptic gloves | Spend little now; printer later | Carlos |
+| 2026-11-09 | Licence check: MediaPipeUnityPlugin is MIT; it bundles Google MediaPipe (Apache 2.0). Both allow use in a closed or open app with attribution | Required before reusing code (CLAUDE.md) | Claude (PM) |
