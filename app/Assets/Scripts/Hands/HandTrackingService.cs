@@ -59,6 +59,11 @@ namespace DiyVr.Hands
         private bool _hasPending;
         private string _workerError;
 
+        // Camera state of the frame being processed: written on the main thread before the worker is woken, copied to
+        // _pendingFrame by the worker with the result (at most one frame is in flight, so it cannot change meanwhile).
+        private HandFrameInfo _inFlightFrame;
+        private HandFrameInfo _pendingFrame;
+
         /// <summary>Why the service is off, or "running" / "starting".</summary>
         public string Status { get; private set; } = "starting";
 
@@ -68,6 +73,12 @@ namespace DiyVr.Hands
 
         /// <summary>Latest result, newest first replaced each time a frame finishes. Never null.</summary>
         public IReadOnlyList<HandPose> LatestHands { get; private set; } = NoHands;
+
+        /// <summary>Intrinsics and AR camera world pose captured when the frame behind <see cref="LatestHands"/> was grabbed.</summary>
+        public HandFrameInfo LatestFrame { get; private set; }
+
+        /// <summary>Increases by one every time a new result (even "no hands") is published.</summary>
+        public int ResultVersion { get; private set; }
 
         private void OnEnable()
         {
@@ -180,6 +191,7 @@ namespace DiyVr.Hands
                     transformation = XRCpuImage.Transformation.None,
                 };
                 image.Convert(conversion, _buffer);
+                CaptureFrameInfo(w, h);
             }
             catch (Exception e)
             {
@@ -194,6 +206,28 @@ namespace DiyVr.Hands
 
             Volatile.Write(ref _busy, 1);
             _wake.Release();
+        }
+
+        // Main thread. Pose = the AR camera's transform right now (the latest pose, not an interpolation to the image
+        // timestamp). Intrinsics are for the full camera image; they are rescaled to the (uniformly downscaled) size
+        // the landmarks are normalised against, so pixels and intrinsics agree.
+        private void CaptureFrameInfo(int w, int h)
+        {
+            HandIntrinsics k;
+            XRCameraIntrinsics ci;
+            if (_camera.TryGetIntrinsics(out ci) && ci.resolution.x > 0 && ci.resolution.y > 0
+                && ci.focalLength.x > 0f && ci.focalLength.y > 0f)
+            {
+                float sx = (float)w / ci.resolution.x, sy = (float)h / ci.resolution.y;
+                k = new HandIntrinsics(ci.focalLength.x * sx, ci.focalLength.y * sy,
+                    ci.principalPoint.x * sx, ci.principalPoint.y * sy, w, h);
+            }
+            else
+            {
+                k = HandIntrinsics.Fallback(w, h);
+            }
+            Transform t = _camera.transform;
+            _inFlightFrame = new HandFrameInfo { Intrinsics = k, CameraPosition = t.position, CameraRotation = t.rotation };
         }
 
         // Worker thread: one frame per wake-up.
@@ -224,6 +258,7 @@ namespace DiyVr.Hands
                     {
                         _pendingHands = hands;
                         _pendingMs = ms;
+                        _pendingFrame = _inFlightFrame;
                         _hasPending = true;
                     }
                 }
@@ -270,6 +305,7 @@ namespace DiyVr.Hands
         {
             IReadOnlyList<HandPose> hands = null;
             double ms = 0;
+            HandFrameInfo frame = default(HandFrameInfo);
             string error = null;
             lock (_lock)
             {
@@ -277,6 +313,7 @@ namespace DiyVr.Hands
                 {
                     hands = _pendingHands;
                     ms = _pendingMs;
+                    frame = _pendingFrame;
                     _hasPending = false;
                 }
                 error = _workerError;
@@ -293,6 +330,8 @@ namespace DiyVr.Hands
             if (hands != null)
             {
                 LatestHands = hands;
+                LatestFrame = frame;
+                ResultVersion++;
                 HandCount = hands.Count;
                 _inferenceMs.Add(ms);
                 _rate.Tick(now);
