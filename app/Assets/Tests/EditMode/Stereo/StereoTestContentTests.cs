@@ -54,5 +54,38 @@ namespace DiyVr.Tests
             Vector3 p = StereoTestContent.CubeWorldPosition(Vector3.zero, Quaternion.Euler(-90f, 0f, 0f), 1f);
             Assert.AreEqual(1f, p.z, 1e-4f);
         }
+
+        [Test]
+        public void CubePlacement_LevelHead_AheadAndDropped()
+        {
+            Vector3 p = StereoTestContent.CubePlacement(new Vector3(1f, 1.6f, 2f), Quaternion.identity, 1.5f, 0.3f);
+            Assert.AreEqual(1f, p.x, 1e-4f);
+            Assert.AreEqual(1.3f, p.y, 1e-4f);
+            Assert.AreEqual(3.5f, p.z, 1e-4f);
+        }
+
+        [Test]
+        public void CubePlacement_HeadPitchedDown60_StillHorizontallyAhead()
+        {
+            Vector3 p = StereoTestContent.CubePlacement(new Vector3(0f, 1.6f, 0f), Quaternion.Euler(60f, 90f, 0f), 1.5f, 0.3f);
+            Assert.AreEqual(1.5f, p.x, 1e-4f);
+            Assert.AreEqual(0f, p.z, 1e-4f);
+            Assert.AreEqual(1.3f, p.y, 1e-4f);
+        }
+
+        [Test]
+        public void CubePlacement_LookingStraightDown_FallsBackToWorldForward()
+        {
+            Vector3 p = StereoTestContent.CubePlacement(new Vector3(0f, 1.6f, 0f), Quaternion.Euler(90f, 0f, 0f), 1.5f, 0.3f);
+            Assert.AreEqual(1.5f, p.z, 1e-4f);
+            Assert.AreEqual(1.3f, p.y, 1e-4f);
+        }
+
+        [Test]
+        public void CubePlacement_ZeroDrop_KeepsHeadHeight()
+        {
+            Vector3 p = StereoTestContent.CubePlacement(new Vector3(0f, 1.6f, 0f), Quaternion.identity, 1.5f, 0f);
+            Assert.AreEqual(1.6f, p.y, 1e-4f);
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace DiyVr.App
         AdjustDownBig,
         AdjustUpBig,
         Save,
+        PlaceCube,
         TogglePassthrough,
         ToggleOverlay,
     }
@@ -29,7 +30,7 @@ namespace DiyVr.App
     /// <summary>
     /// Pure button-to-action logic, no Unity types. Each press fires once (edge); D-pad left/right repeat while
     /// held: first after <see cref="RepeatDelay"/>, then every <see cref="RepeatInterval"/>.
-    /// Lens-tool actions are dropped while the lens tool is closed; Y, X and View always work.
+    /// Lens-tool actions are dropped while the lens tool is closed; Y, X and View always work; A means Save while open and PlaceCube (move the test cube) while closed.
     /// A button already held when the lens tool opens does not fire (only a fresh press does).
     /// </summary>
     public sealed class GamepadMapper
@@ -74,6 +75,7 @@ namespace DiyVr.App
             }
             else
             {
+                if (Pressed(now.A, _prev.A)) actions.Add(GamepadAction.PlaceCube);
                 Reset(_left);
                 Reset(_right);
             }

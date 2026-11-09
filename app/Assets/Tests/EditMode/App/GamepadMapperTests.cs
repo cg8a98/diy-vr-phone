@@ -70,10 +70,33 @@ namespace DiyVr.Tests
         [Test]
         public void LensOnlyActions_IgnoredWhenClosed()
         {
-            var all = new GamepadButtons { A = true, B = true, DpadUp = true, DpadDown = true, DpadLeft = true, LeftShoulder = true, RightShoulder = true };
+            var all = new GamepadButtons { B = true, DpadUp = true, DpadDown = true, DpadLeft = true, LeftShoulder = true, RightShoulder = true };
             Assert.That(Step(all, false), Is.Empty);
             Step(None, false);
             Assert.That(Step(new GamepadButtons { DpadRight = true }, false), Is.Empty);
+        }
+
+        [Test]
+        public void A_WhenClosed_PlacesCube_OnceNotEveryFrame()
+        {
+            var a = new GamepadButtons { A = true };
+            Assert.That(Step(a, false), Is.EqualTo(new[] { GamepadAction.PlaceCube }));
+            Assert.That(Step(a, false), Is.Empty);
+            Step(None, false);
+            Assert.That(Step(a, false), Is.EqualTo(new[] { GamepadAction.PlaceCube }));
+        }
+
+        [Test]
+        public void A_WhenOpen_StillSaves_NotPlaceCube()
+        {
+            Assert.That(Step(new GamepadButtons { A = true }, true), Is.EqualTo(new[] { GamepadAction.Save }));
+        }
+
+        [Test]
+        public void A_HeldWhileLensToolCloses_DoesNotPlaceCube()
+        {
+            Step(new GamepadButtons { A = true }, true);
+            Assert.That(Step(new GamepadButtons { A = true }, false), Is.Empty);
         }
 
         [Test]
