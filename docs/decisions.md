@@ -4,6 +4,7 @@ One line each, newest first. Only decisions that change future work.
 
 | Date | Decision | Why | Decided by |
 |---|---|---|---|
+| 2026-11-09 | Display refresh: stay at a stable 60 Hz for now; revisit in Milestone 7 (thermal) | Four attempts (#25, #27, #29, #31) did not hold 120 Hz while ARCore runs; the S23 Ultra drops to 60. 60 Hz with pose prediction is the norm for phone VR, and rendering two eyes at 120 would double GPU load and heat against the 3-hour session goal | Claude (builder, ticket 1.21) |
 | 2026-11-03 | Up to 3 builders at once (overrides the build plan's limit of 2); still never on the same files, one epic at a time | Owner wants faster progress within the same review process | Carlos |
 | 2026-11-03 | Android graphics API is OpenGLES3, not Vulkan | ARCore does not support Vulkan; its build step rejects it | Claude (builder, ticket 1.10) |
 | 2026-11-03 | Reuse Google Cardboard SDK distortion maths (googlevr/cardboard, Apache License 2.0 for the SDK files; only its third_party/unity_plugin_api folder differs and is not used; keep attribution in CardboardDistortion.cs) | Proven lens model for the stereo rig (1.4); no code copied verbatim, formulas re-implemented in C# | Claude (builder, ticket 1.4) |

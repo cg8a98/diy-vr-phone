@@ -1,8 +1,10 @@
 using System.Text;
 using DiyVr.Core;
+using DiyVr.Stereo;
 using DiyVr.Tracking;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
@@ -11,8 +13,7 @@ namespace DiyVr.Diagnostics
     /// <summary>
     /// On-screen debug readout: FPS, frame time, ARCore tracking state, thermal status, build version.
     /// Toggle with a three-finger tap (routed by GestureArbiter) or <see cref="Toggle"/>.
-    /// The text is built separately from the drawing (<see cref="BuildText"/>) so a world-space
-    /// version can reuse it later.
+    /// Drawn as a head-locked world-space panel (both eyes see it inside the headset).
     /// </summary>
     public sealed class DebugOverlay : MonoBehaviour
     {
@@ -30,7 +31,9 @@ namespace DiyVr.Diagnostics
         private HeadPoseDriver _headPose;
         private string _cameraLabel = "n/a";
         private string _text = string.Empty;
-        private GUIStyle _style;
+        private StereoRig _rig;
+        private GameObject _panel;
+        private Text _label;
 
         public bool Visible { get; private set; }
 
@@ -158,26 +161,55 @@ namespace DiyVr.Diagnostics
             sb.Append(", drift ").Append(h.DriftCmPerSec.ToString("0.0")).Append(" cm/s\n");
         }
 
-        private void OnGUI()
+        // Head-locked world-space panel, rendered by both eye cameras (default layer), like the lens tool panel.
+        private void EnsurePanel()
         {
-            if (!Visible)
-                return;
+            if (_panel != null) return;
+            if (_rig == null) _rig = FindFirstObjectByType<StereoRig>();
+            if (_rig == null) return;
 
-            if (_style == null)
-            {
-                _style = new GUIStyle(GUI.skin.box)
-                {
-                    alignment = TextAnchor.UpperLeft,
-                    wordWrap = false,
-                    richText = false
-                };
-            }
+            _panel = new GameObject("DebugOverlayPanel");
+            _panel.transform.SetParent(_rig.transform, false);
+            _panel.transform.localPosition = OverlayPlacement.LocalPosition(OverlayPlacement.Distance, OverlayPlacement.DegreesDown);
+            _panel.transform.localRotation = OverlayPlacement.LocalRotation(OverlayPlacement.DegreesDown);
+            var canvas = _panel.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var rt = _panel.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(1000f, 1000f * OverlayPlacement.Height / OverlayPlacement.Width);
+            rt.localScale = Vector3.one * (OverlayPlacement.Width / 1000f);
 
-            _style.fontSize = Mathf.Max(14, Screen.height / 36);
-            float pad = _style.fontSize * 0.5f;
-            var content = new GUIContent(_text);
-            Vector2 size = _style.CalcSize(content);
-            GUI.Box(new Rect(pad, pad, size.x + pad, size.y + pad), content, _style);
+            var bg = new GameObject("Background");
+            bg.transform.SetParent(_panel.transform, false);
+            var img = bg.AddComponent<Image>();
+            img.color = new Color(0f, 0f, 0f, 0.7f);
+            var bgRt = bg.GetComponent<RectTransform>();
+            bgRt.anchorMin = Vector2.zero; bgRt.anchorMax = Vector2.one; bgRt.offsetMin = bgRt.offsetMax = Vector2.zero;
+
+            var tx = new GameObject("Text");
+            tx.transform.SetParent(_panel.transform, false);
+            _label = tx.AddComponent<Text>();
+            _label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            _label.fontSize = 26;
+            _label.color = Color.white;
+            _label.alignment = TextAnchor.UpperLeft;
+            _label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            _label.verticalOverflow = VerticalWrapMode.Overflow;
+            var txRt = tx.GetComponent<RectTransform>();
+            txRt.anchorMin = Vector2.zero; txRt.anchorMax = Vector2.one;
+            txRt.offsetMin = new Vector2(20f, 10f); txRt.offsetMax = new Vector2(-20f, -10f);
+        }
+
+        private void LateUpdate()
+        {
+            if (Visible) EnsurePanel();
+            if (_panel == null) return;
+            if (_panel.activeSelf != Visible) _panel.SetActive(Visible);
+            if (Visible) _label.text = _text;
+        }
+
+        private void OnDestroy()
+        {
+            if (_panel != null) Destroy(_panel);
         }
     }
 }
