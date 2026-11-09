@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace DiyVr.Tracking
 {
@@ -9,22 +10,29 @@ namespace DiyVr.Tracking
     /// Default layer, so both eye cameras draw it.
     /// </summary>
     [RequireComponent(typeof(ARPlane))]
+    // Runs after ARPlaneMeshVisualizer (default order 0) in every update phase, so our on/off decision is the last word.
+    [DefaultExecutionOrder(1000)]
     public sealed class PlaneVisual : MonoBehaviour
     {
+        private ARPlane _plane;
         private MeshRenderer _mesh;
         private LineRenderer _line;
         private PlaneKind _kind = (PlaneKind)(-1);
 
         private void Awake()
         {
+            _plane = GetComponent<ARPlane>();
             _mesh = GetComponent<MeshRenderer>();
             _line = GetComponent<LineRenderer>();
         }
 
-        // LateUpdate so this wins over ARPlaneMeshVisualizer toggling the renderer.
+        // LateUpdate + late execution order so this wins over ARPlaneMeshVisualizer toggling the renderer.
+        // Merged (subsumed) and non-tracking planes stay hidden, as ARPlaneMeshVisualizer would do on its own.
+        // The prefab template has no trackable id, so it can never draw.
         private void LateUpdate()
         {
-            bool show = PlaneDebugView.Visible;
+            bool show = PlaneClassifier.ShouldShow(PlaneDebugView.Visible, _plane.subsumedBy != null,
+                _plane.trackingState == TrackingState.Tracking, _plane.trackableId != TrackableId.invalidId);
             if (_mesh != null) _mesh.enabled = show;
             if (_line != null) _line.enabled = show;
             if (!show) return;

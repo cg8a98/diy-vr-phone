@@ -133,6 +133,8 @@ namespace DiyVr.Diagnostics
             AppendLossHistory(_sb);
             _sb.Append("Camera ").Append(_cameraLabel).Append('\n');
             _sb.Append(HandsStatus.Line()).Append('\n');
+            _sb.Append("Planes ").Append(PlaneDebugView.PlaneCount)
+               .Append(PlaneDebugView.Visible ? " (shown)" : " (hidden)").Append('\n');
             _sb.Append("Thermal ").Append(_thermalLabel).Append('\n');
             _sb.Append("Build ").Append(Application.version);
             return _sb.ToString();

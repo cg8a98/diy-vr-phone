@@ -26,6 +26,21 @@ namespace DiyVr.Tracking
             return lowest;
         }
 
+        /// <summary>
+        /// True when a plane should count and be drawn: not merged into a bigger plane, currently tracking, and a real
+        /// session plane (not the inactive prefab template, which has no trackable id).
+        /// </summary>
+        public static bool IsLivePlane(bool isSubsumed, bool isTracking, bool hasTrackableId)
+        {
+            return !isSubsumed && isTracking && hasTrackableId;
+        }
+
+        /// <summary>A plane is drawn only when the owner switched the view on AND it is a live plane.</summary>
+        public static bool ShouldShow(bool viewOn, bool isSubsumed, bool isTracking, bool hasTrackableId)
+        {
+            return viewOn && IsLivePlane(isSubsumed, isTracking, hasTrackableId);
+        }
+
         public static PlaneKind Classify(float planeHeight, float lowestHeight)
         {
             float above = planeHeight - lowestHeight;

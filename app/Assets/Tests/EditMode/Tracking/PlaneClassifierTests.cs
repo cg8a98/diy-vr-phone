@@ -18,5 +18,13 @@ namespace DiyVr.Tests
             Assert.AreEqual(PlaneKind.Desk, PlaneClassifier.Classify(PlaneClassifier.DeskMin, 0f));
             Assert.AreEqual(PlaneKind.Desk, PlaneClassifier.Classify(PlaneClassifier.DeskMax, 0f));
         }
+        [Test] public void LivePlane_TrackingNotMerged_IsLive() { Assert.IsTrue(PlaneClassifier.IsLivePlane(false, true, true)); }
+        [Test] public void LivePlane_Subsumed_IsNotLive() { Assert.IsFalse(PlaneClassifier.IsLivePlane(true, true, true)); }
+        [Test] public void LivePlane_NotTracking_IsNotLive() { Assert.IsFalse(PlaneClassifier.IsLivePlane(false, false, true)); }
+        [Test] public void LivePlane_NoTrackableId_IsNotLive() { Assert.IsFalse(PlaneClassifier.IsLivePlane(false, true, false)); }
+        [Test] public void ShouldShow_ViewOff_IsHidden() { Assert.IsFalse(PlaneClassifier.ShouldShow(false, false, true, true)); }
+        [Test] public void ShouldShow_ViewOnLivePlane_IsShown() { Assert.IsTrue(PlaneClassifier.ShouldShow(true, false, true, true)); }
+        [Test] public void ShouldShow_ViewOnSubsumed_IsHidden() { Assert.IsFalse(PlaneClassifier.ShouldShow(true, true, true, true)); }
+        [Test] public void ShouldShow_ViewOnTemplate_IsHidden() { Assert.IsFalse(PlaneClassifier.ShouldShow(true, false, true, false)); }
     }
 }
