@@ -15,7 +15,7 @@ Phase: 6 - Build
 ## Blocking founder tasks
 | Task | Status |
 |---|---|
-| IPD measured (66–67 mm) | Done |
+| IPD measured (value in private folder) | Done |
 | SteamVR installed | Done |
 | USB debugging on S23 Ultra | Done |
 | Unity account | Done (repo secrets pending, needed for ticket 1.3) |

@@ -201,7 +201,7 @@ This plan assumes a Pro plan; tell Claude if you're on another plan and this sec
 | Heat: ARCore, MediaPipe and rendering together throttle the phone | Thermal governor (milestone 7) lowers the hand-tracking rate first. The v2 Peltier cooler adds headroom. |
 | Battery: the phone alone gives an estimated 2–3 hours | Pocket power bank on a cable until v2 adds the external battery. |
 | Test headset lenses are poor | Lens profile tool. The test headset is only a stepping stone; v1 uses aspheric lenses. |
-| Wi-Fi: the AT&T gateway may lack 6 GHz | Router check task; 5 GHz fallback; Deco BE63 mesh planned. |
+| Wi-Fi: the home router may lack 6 GHz | Router check task; 5 GHz fallback; a 6 GHz mesh is planned. |
 | Unity licence in CI | Unity Personal works with GameCI. Fallback: build on Carlos's PC with a step-by-step guide. |
 | Licence terms of reused files or code | Licence check rule in section 4. |
 | Update hosting: the code repository is private, so the app can't download its releases without a login | Auto-updates deferred until the repository goes public (decided 2026-11-03). Never bake a GitHub token into the app. |

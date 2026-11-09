@@ -52,7 +52,7 @@ Customer interviews are not applicable (personal project). Instead, a baseline t
 > What: try the headset with existing software before we write any. Why: shows comfort, lens quality and streaming quality as a starting point, and tells us whether head-rotation-only PC VR causes motion sickness for you. How: 1. Install a Google Cardboard demo app and look around for 10 minutes. 2. Install PhoneVR (an ALVR-based phone client; Claude will send links and matching versions) and ALVR on the PC, then try one SteamVR game for 10 minutes. 3. Write down: comfort, blur at the edges, light leaks, heat, any nausea. Claude records the results in `docs/decisions.md`. Time: 1–2 h. Cost: free. · Done when: notes are sent to Claude.
 
 > **Router check** - Before PC VR milestone (not blocking for milestone 1)
-> What: find out whether your AT&T gateway has a 6 GHz (Wi-Fi 6E) band. Why: PC VR and 2D game streaming need a fast, quiet wireless link; 5 GHz can work, 6 GHz is better. How: 1. Read the model name on the gateway's label and send it to Claude. 2. Claude tells you whether it has 6 GHz and the best settings. 3. If not, the planned Deco BE63 mesh solves it. Time: 10 min. Cost: free (mesh: Estimate $300–450, optional). · Done when: we know which band the phone will use.
+> What: find out whether your home router has a 6 GHz (Wi-Fi 6E) band. Why: PC VR and 2D game streaming need a fast, quiet wireless link; 5 GHz can work, 6 GHz is better. How: 1. Read the model name on the gateway's label and send it to Claude. 2. Claude tells you whether it has 6 GHz and the best settings. 3. If not, the planned Deco BE63 mesh solves it. Time: 10 min. Cost: free (mesh: Estimate $300–450, optional). · Done when: we know which band the phone will use.
 
 ### 2.3 Inputs only the owner can provide
 
@@ -60,7 +60,7 @@ Customer interviews are not applicable (personal project). Instead, a baseline t
 > What: confirm the Project Brief (draft 4) and the Build Plan milestones. Why: everything is planned from them. How: reply "agreed" or list changes. Time: 20 min. Cost: free. · Done when: you have agreed both.
 
 > **IPD measurement** - Blocking
-> Done: 66–67 mm (2026-11-03). Default lens spacing is 66.5 mm.
+> Done (2026-11-03). The value is in the private folder; the repo default lens spacing is 66.5 mm.
 
 > **Private folder** - Blocking
 > What: a folder for personal project data, outside the git clone: `C:\Claude Code Projects\DIY VR Smartphone Headset\private\`. Why: room scans, measurements, receipts and the release-key backup must never reach the repository, so it can go public one day. How: Claude creates it through the folder access you granted, at "let's start". Time: none. Cost: free. · Done when: the folder exists and the git clone lives in a separate subfolder.
@@ -99,7 +99,7 @@ Customer interviews are not applicable (personal project). Instead, a baseline t
 ### 2.4 Budget and time
 
 > **Spending caps** - Blocking
-> What: v0 cap about $30 (test headset). Total soft target about $180 for v1+v2 parts, slightly over is OK; printer and tools are separate. Why: you want to spend as little as possible now. How: use one card for all project purchases and keep receipts in a folder; Claude keeps a running total in `private\budget.md`. Time: 5 min. Cost: none. · Done when: you've confirmed the caps.
+> What: Spending caps for v0 and v1+v2 are kept in `privateudget.md`; printer and tools are separate. Why: you want to spend as little as possible now. How: use one card for all project purchases and keep receipts in a folder; Claude keeps a running total in `private\budget.md`. Time: 5 min. Cost: none. · Done when: you've confirmed the caps.
 
 > **Time** - Ongoing
 > What: no fixed hours until the printer arrives. Why: no deadline. How: work whenever you like; once the printer arrives, we agree weekly hours and a timeline. Time: none. Cost: none. · Done when: revisited at "printer arrived".
@@ -107,7 +107,7 @@ Customer interviews are not applicable (personal project). Instead, a baseline t
 ## 3. Before launch
 
 ### 3.1 Business and legal
-Not applicable - personal project. Revisit after v2 (open source vs. selling print files vs. a product). Your day job is unrelated, so no employer IP issue (confirmed 2026-11-03). One item applies now: respect the licences of the video's print files and any open-source code we reuse. Claude checks each licence before we use it.
+Not applicable - personal project. Revisit after v2 (open source vs. selling print files vs. a product). No employer IP issue (confirmed 2026-11-03). One item applies now: respect the licences of the video's print files and any open-source code we reuse. Claude checks each licence before we use it.
 
 ### 3.2 Getting paid
 Not applicable - personal project. Revisit after v2.
