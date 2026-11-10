@@ -1,0 +1,21 @@
+{
+    "name": "DiyVr.Experiments.FiveButton",
+    "rootNamespace": "DiyVr.Experiments",
+    "references": [
+        "DiyVr.Runtime",
+        "DiyVr.Interaction",
+        "DiyVr.Gestures",
+        "DiyVr.Hands",
+        "DiyVr.Hands.Core",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
