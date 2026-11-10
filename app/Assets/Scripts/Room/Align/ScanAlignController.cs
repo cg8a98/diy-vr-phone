@@ -229,7 +229,6 @@ namespace DiyVr.Room
                 _passthrough.SetManual(true);
             }
             Say(null, now);
-            Debug.Log("[Align] align mode opened");
             return true;
         }
 
@@ -264,7 +263,6 @@ namespace DiyVr.Room
             _hasSaved = true;
             EndAlign();
             Say(null, now);
-            Debug.Log("[Align] alignment saved");
             return true;
         }
 
@@ -275,7 +273,6 @@ namespace DiyVr.Room
             if (_root != null) Apply(_before);
             EndAlign();
             Say(null, Time.unscaledTime);
-            Debug.Log("[Align] align mode cancelled");
         }
 
         private void EndAlign()
