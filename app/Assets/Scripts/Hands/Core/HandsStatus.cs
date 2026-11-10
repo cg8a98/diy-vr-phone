@@ -13,6 +13,10 @@ namespace DiyVr.Hands
         public static int HandCount;
         public static double LandmarkFps;
         public static double InferenceMs;
+        /// <summary>Latency breakdown in ms (averages): camera-to-draw total, camera frame age at pick-up (-1 unknown), image convert. 0 total = not measured yet.</summary>
+        public static double LagTotalMs;
+        public static double LagAgeMs = -1;
+        public static double LagConvertMs;
         /// <summary>Why hand tracking is off.</summary>
         public static string Reason = "not started";
         /// <summary>"GPU" or "CPU": what the landmarker runs on. Empty until known.</summary>
@@ -21,7 +25,10 @@ namespace DiyVr.Hands
         /// <summary>"Hands 1, 24 fps, 18 ms" or "Hands off: model missing".</summary>
         public static string Line()
         {
-            return Format(Active, HandCount, LandmarkFps, InferenceMs, Reason, Delegate);
+            string line = Format(Active, HandCount, LandmarkFps, InferenceMs, Reason, Delegate);
+            if (Active && LagTotalMs > 0)
+                line += "\n" + HandLatency.FormatLag(LagTotalMs, LagAgeMs, LagConvertMs, InferenceMs);
+            return line;
         }
 
         public static string Format(bool active, int handCount, double fps, double ms, string reason)
@@ -46,6 +53,9 @@ namespace DiyVr.Hands
             HandCount = 0;
             LandmarkFps = 0;
             InferenceMs = 0;
+            LagTotalMs = 0;
+            LagAgeMs = -1;
+            LagConvertMs = 0;
             Reason = reason;
             Delegate = string.Empty;
         }
