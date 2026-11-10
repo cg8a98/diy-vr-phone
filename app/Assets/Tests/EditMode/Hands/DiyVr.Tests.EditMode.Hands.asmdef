@@ -3,6 +3,7 @@
     "rootNamespace": "DiyVr.Tests.Hands",
     "references": [
         "DiyVr.Hands.Core",
+        "DiyVr.Passthrough",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
