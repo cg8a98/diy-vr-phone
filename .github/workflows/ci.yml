@@ -127,6 +127,21 @@ jobs:
           androidKeystorePass: ${{ github.event_name == 'push' && secrets.ANDROID_KEYSTORE_PASS || '' }}
           androidKeyaliasName: ${{ github.event_name == 'push' && secrets.ANDROID_KEYALIAS_NAME || '' }}
           androidKeyaliasPass: ${{ github.event_name == 'push' && secrets.ANDROID_KEYALIAS_PASS || '' }}
+      - name: Check the APK manifest has what the updater needs
+        run: |
+          APK="$(find build/Android -name '*.apk' | head -n 1)"
+          [ -n "$APK" ] || { echo "::error::No APK found"; exit 1; }
+          unzip -p "$APK" AndroidManifest.xml > /tmp/manifest.bin
+          python3 - <<'PY'
+          import sys
+          d = open('/tmp/manifest.bin', 'rb').read()
+          missing = [s for s in ['android.permission.REQUEST_INSTALL_PACKAGES', 'androidx.core.content.FileProvider']
+                     if s.encode('utf-16-le') not in d and s.encode() not in d]
+          if missing:
+              print('::error::APK manifest is missing: ' + ', '.join(missing) + ' (the in-app updater cannot install updates)')
+              sys.exit(1)
+          print('APK manifest OK: install permission and FileProvider present')
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: diy-vr-android-apk
