@@ -43,7 +43,8 @@ namespace DiyVr.Room
             if (_count > 0)
             {
                 int last = (_next + _samples.Length - 1) % _samples.Length;
-                if (_samples[last] == position) return false;
+                // Exact compare on purpose: Vector3 == calls positions within 0.01 mm equal, which would drop real samples.
+                if (_samples[last].Equals(position)) return false;
             }
             _samples[_next] = position;
             _next = (_next + 1) % _samples.Length;
