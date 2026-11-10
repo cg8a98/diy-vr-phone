@@ -20,7 +20,7 @@ namespace DiyVr.Hands
     ///
     /// Main thread each frame: if no inference is running, grab the latest CPU image, convert it to RGBA32 at a
     /// reduced size straight into a reusable buffer, dispose the XRCpuImage, and wake the worker. The worker thread
-    /// runs HandLandmarker in VIDEO mode (CPU delegate), so the main thread never waits on inference. At most one
+    /// runs HandLandmarker in VIDEO mode (GPU delegate, CPU as fallback), so the main thread never waits on inference. At most one
     /// inference is in flight; frames that arrive meanwhile are simply not acquired.
     ///
     /// If anything fails to start (model missing, native library missing, no camera) the service writes the reason to
@@ -33,6 +33,12 @@ namespace DiyVr.Hands
 
         [SerializeField] private int maxHands = 2;
         [SerializeField] private int maxImageWidth = HandImageSize.DefaultMaxWidth;
+
+        // Lower than MediaPipe's default 0.5 so hands survive dim light and motion blur. Cost: more false hands on
+        // clutter and a little jitter on weak detections.
+        public const float MinDetectionConfidence = 0.35f;
+        public const float MinPresenceConfidence = 0.35f;
+        public const float MinTrackingConfidence = 0.35f;
 
         private static readonly IReadOnlyList<HandPose> NoHands = new HandPose[0];
 
@@ -48,6 +54,8 @@ namespace DiyVr.Hands
         private volatile bool _quit;
         private int _busy; // 1 while the worker owns the buffer; touched with Interlocked
         private long _lastTimestampMs = -1;
+        private string _delegate = string.Empty;
+        private bool _forceCpu;
 
         private NativeArray<byte> _buffer;
         private int _bufW, _bufH;
@@ -66,6 +74,9 @@ namespace DiyVr.Hands
 
         /// <summary>Why the service is off, or "running" / "starting".</summary>
         public string Status { get; private set; } = "starting";
+
+        /// <summary>"GPU" or "CPU": what the landmarker runs on.</summary>
+        public string Delegate { get { return _delegate; } }
 
         public int HandCount { get; private set; }
         public double LandmarkFps { get; private set; }
@@ -119,20 +130,39 @@ namespace DiyVr.Hands
                 yield break;
             }
 
-            // 2. The landmarker. DllNotFoundException here means the native libraries are not in the build.
-            try
+            // 2. The landmarker. GPU first (much faster inference), CPU if creating it throws or a GPU run fails later.
+            //    DllNotFoundException here means the native libraries are not in the build.
+            string delegateName = null;
+            Exception lastError = null;
+            var order = _forceCpu
+                ? new[] { Mediapipe.Tasks.Core.BaseOptions.Delegate.CPU }
+                : new[] { Mediapipe.Tasks.Core.BaseOptions.Delegate.GPU, Mediapipe.Tasks.Core.BaseOptions.Delegate.CPU };
+            foreach (var d in order)
             {
-                var baseOptions = new Mediapipe.Tasks.Core.BaseOptions(
-                    Mediapipe.Tasks.Core.BaseOptions.Delegate.CPU, modelAssetBuffer: model);
-                var options = new HandLandmarkerOptions(baseOptions, MpRunningMode.VIDEO, numHands: Mathf.Max(1, maxHands));
-                _landmarker = HandLandmarker.CreateFromOptions(options);
+                try
+                {
+                    var baseOptions = new Mediapipe.Tasks.Core.BaseOptions(d, modelAssetBuffer: model);
+                    var options = new HandLandmarkerOptions(baseOptions, MpRunningMode.VIDEO, numHands: Mathf.Max(1, maxHands),
+                        minHandDetectionConfidence: MinDetectionConfidence,
+                        minHandPresenceConfidence: MinPresenceConfidence,
+                        minTrackingConfidence: MinTrackingConfidence);
+                    _landmarker = HandLandmarker.CreateFromOptions(options);
+                    delegateName = d == Mediapipe.Tasks.Core.BaseOptions.Delegate.GPU ? "GPU" : "CPU";
+                    break;
+                }
+                catch (Exception e)
+                {
+                    lastError = e;
+                    Debug.LogWarning("Hand landmarker " + d + " delegate failed: " + e.GetType().Name + ": " + e.Message);
+                }
             }
-            catch (Exception e)
+            if (_landmarker == null)
             {
-                Debug.LogException(e);
-                Fail("init failed: " + e.GetType().Name);
+                if (lastError != null) Debug.LogException(lastError);
+                Fail("init failed: " + (lastError != null ? lastError.GetType().Name : "unknown"));
                 yield break;
             }
+            _delegate = delegateName;
 
             // 3. The camera.
             for (float waited = 0f; _camera == null && waited < 10f; waited += Time.unscaledDeltaTime)
@@ -155,6 +185,7 @@ namespace DiyVr.Hands
             _ready = true;
             HandsStatus.Active = true;
             HandsStatus.Reason = string.Empty;
+            HandsStatus.Delegate = _delegate;
         }
 
         private void Update()
@@ -320,6 +351,17 @@ namespace DiyVr.Hands
                 _workerError = null;
             }
 
+            if (error != null && _delegate == "GPU")
+            {
+                // The GPU delegate failed while running: rebuild on the CPU delegate instead of giving up.
+                Debug.LogWarning("Hand tracking GPU run failed, switching to CPU: " + error);
+                _forceCpu = true;
+                Shutdown();
+                Status = "starting";
+                HandsStatus.SetOff("switching to CPU");
+                StartCoroutine(Init());
+                return;
+            }
             if (error != null)
             {
                 Fail("inference failed: " + error);
@@ -343,6 +385,7 @@ namespace DiyVr.Hands
             HandsStatus.HandCount = HandCount;
             HandsStatus.LandmarkFps = LandmarkFps;
             HandsStatus.InferenceMs = InferenceMs;
+            HandsStatus.Delegate = _delegate;
         }
 
         private void Shutdown()
@@ -364,6 +407,7 @@ namespace DiyVr.Hands
             if (_buffer.IsCreated) _buffer.Dispose();
             if (_wake != null) { _wake.Dispose(); _wake = null; }
             Volatile.Write(ref _busy, 0);
+            _hasPending = false;
             LatestHands = NoHands;
             HandCount = 0;
         }

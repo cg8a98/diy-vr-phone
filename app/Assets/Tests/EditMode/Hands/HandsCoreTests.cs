@@ -91,6 +91,7 @@ namespace DiyVr.Tests.Hands
         {
             Assert.AreEqual("Hands 1, 24 fps, 18 ms", HandsStatus.Format(true, 1, 23.6, 17.5, ""));
             Assert.AreEqual("Hands off: model missing", HandsStatus.Format(false, 0, 0, 0, "model missing"));
+            Assert.AreEqual("Hands 2, 15 fps, 50 ms, GPU", HandsStatus.Format(true, 2, 15.2, 50.1, "", "GPU"));
             Assert.AreEqual("Hands off: unknown", HandsStatus.Format(false, 0, 0, 0, ""));
         }
 

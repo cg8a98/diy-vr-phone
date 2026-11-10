@@ -15,20 +15,29 @@ namespace DiyVr.Hands
         public static double InferenceMs;
         /// <summary>Why hand tracking is off.</summary>
         public static string Reason = "not started";
+        /// <summary>"GPU" or "CPU": what the landmarker runs on. Empty until known.</summary>
+        public static string Delegate = string.Empty;
 
         /// <summary>"Hands 1, 24 fps, 18 ms" or "Hands off: model missing".</summary>
         public static string Line()
         {
-            return Format(Active, HandCount, LandmarkFps, InferenceMs, Reason);
+            return Format(Active, HandCount, LandmarkFps, InferenceMs, Reason, Delegate);
         }
 
         public static string Format(bool active, int handCount, double fps, double ms, string reason)
+        {
+            return Format(active, handCount, fps, ms, reason, string.Empty);
+        }
+
+        /// <summary>"Hands 2, 15 fps, 50 ms, GPU" (the delegate is left out when empty).</summary>
+        public static string Format(bool active, int handCount, double fps, double ms, string reason, string delegateName)
         {
             if (!active)
                 return "Hands off: " + (string.IsNullOrEmpty(reason) ? "unknown" : reason);
             return "Hands " + handCount.ToString(CultureInfo.InvariantCulture)
                 + ", " + fps.ToString("0", CultureInfo.InvariantCulture) + " fps, "
-                + ms.ToString("0", CultureInfo.InvariantCulture) + " ms";
+                + ms.ToString("0", CultureInfo.InvariantCulture) + " ms"
+                + (string.IsNullOrEmpty(delegateName) ? string.Empty : ", " + delegateName);
         }
 
         public static void SetOff(string reason)
@@ -38,6 +47,7 @@ namespace DiyVr.Hands
             LandmarkFps = 0;
             InferenceMs = 0;
             Reason = reason;
+            Delegate = string.Empty;
         }
     }
 }

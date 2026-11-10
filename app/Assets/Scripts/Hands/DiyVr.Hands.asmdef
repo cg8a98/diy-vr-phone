@@ -3,6 +3,8 @@
     "rootNamespace": "DiyVr.Hands",
     "references": [
         "DiyVr.Hands.Core",
+        "DiyVr.Runtime",
+        "DiyVr.Passthrough",
         "Mediapipe.Runtime",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
