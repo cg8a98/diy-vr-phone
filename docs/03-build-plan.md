@@ -66,9 +66,9 @@ One Android app ("the headset app") that runs on the Galaxy S23 Ultra inside a p
 |---|---|---|---|---|
 | 1 | Foundation | Unity app builds automatically, renders stereo with 6DoF ARCore tracking, and has a lens profile for the test headset | Install the APK, walk around the virtual cube, and check that grid lines look straight (rows 1–2 of the feature table) | 6–8 |
 | 2 | Hands | Gaze-and-pinch interaction and placing objects | Rows 3–4 of the feature table | 4–6 |
-| 3 | Room mesh (must nail) | Scan-and-Load, marker alignment, boundary, colliders, live depth warnings, passthrough peek | Rows 5–6 of the feature table, using the reference-room measurements | 6–10 |
+| 3 | Room mesh (must nail) | Scan-and-Load, marker alignment, boundary, colliders, live depth warnings, passthrough peek. Last ticket: a very simple "re-skin my apartment" proof of concept (themed walls on the aligned scan, a few collectibles on free floor) | Rows 5–6 of the feature table, using the reference-room measurements; the proof of concept shows a game can use the real layout | 6–10 |
 | 4 | Cinema | Jellyfin browser and 2D/3D player | Row 7 of the feature table | 4–6 |
-| 5 | PC VR | PhoneVR plus ALVR baseline, then a fork with ARCore 6DoF poses | Row 9 of the feature table | 6–10 |
+| 5 | PC VR | PhoneVR plus ALVR baseline, then a fork with ARCore 6DoF poses. Plus "PC game mode" (camera view, hand tracking and plane detection off while streaming) and an optional USB cable link that charges the phone | Row 9 of the feature table | 6–10 |
 | 6 | 2D game screen | Phase A, then Phase B only if needed | Row 10 of the feature table | 2–8 |
 | 7 | Thermal and endurance | Thermal governor, plus the 3-hour session test | Rows 8 and 11 of the feature table | 3–4 |
 | H1 | v1 hardware (Carlos-led, Claude guides) | Printed shell adapted from the video's files, lenses, eye spacing, strap; new lens profile | All v0 acceptance tests pass again in the printed headset, and it's more comfortable than the test headset | Guides only |
