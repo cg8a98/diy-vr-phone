@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DiyVr.Experiments
+namespace DiyVr.Gestures
 {
     /// <summary>
     /// Turns MediaPipe landmarks into PinchDetector inputs. Space chosen: normalised image x,y with x multiplied by the

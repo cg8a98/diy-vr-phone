@@ -1,0 +1,23 @@
+{
+    "name": "DiyVr.Experiments.PlaceObjects",
+    "rootNamespace": "DiyVr.Experiments.PlaceObjects",
+    "references": [
+        "DiyVr.Runtime",
+        "DiyVr.Interaction",
+        "DiyVr.Gestures",
+        "DiyVr.Hands",
+        "DiyVr.Hands.Core",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
