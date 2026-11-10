@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged into the app manifest. Adds the small see-through screen that opens Android's file picker for a room
+     scan (ticket 3.1). It asks for no permission: the picker itself hands over the one file the owner taps. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="com.diyvr.scanpicker.ScanPickerActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:configChanges="orientation|screenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|density" />
+    </application>
+</manifest>

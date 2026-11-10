@@ -1,0 +1,25 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.diyvr.scanpicker"
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 24
+    }
+
+    // This module has its own build.gradle, so Gradle's default layout (src/main/...) would apply and the manifest
+    // and the Java file at the module root would be silently ignored (same trap as UpdaterRes.androidlib).
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['java']
+            res.srcDirs = ['res']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
