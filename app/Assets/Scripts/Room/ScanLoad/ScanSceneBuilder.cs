@@ -85,10 +85,15 @@ namespace DiyVr.Room
                 ShrinkTextures(scan, maxTextureSize);
 
                 scan.Root = new GameObject(RootName);
-                bool placed = await scan.Import.InstantiateMainSceneAsync(scan.Root.transform);
-                // A file without a "main scene" entry: show its first scene instead.
-                if (placed && scan.Root.transform.childCount == 0 && scan.Import.SceneCount > 0)
+                // A file without a "main scene" entry: show its first scene instead (asking glTFast for the main
+                // scene of such a file only logs a warning and builds nothing).
+                bool placed;
+                if (scan.Import.DefaultSceneIndex.HasValue)
+                    placed = await scan.Import.InstantiateMainSceneAsync(scan.Root.transform);
+                else if (scan.Import.SceneCount > 0)
                     placed = await scan.Import.InstantiateSceneAsync(scan.Root.transform, 0);
+                else
+                    placed = false;
                 if (!placed)
                 {
                     scan.Error = "could not build the scan" + Detail(log);
