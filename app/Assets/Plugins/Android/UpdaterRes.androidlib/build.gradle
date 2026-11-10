@@ -13,6 +13,15 @@ android {
         minSdk 24
     }
 
+    // This module has its own build.gradle, so Gradle's default layout (src/main/...) applies and the
+    // manifest and res/ at the module root were silently ignored (no install permission, no FileProvider).
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            res.srcDirs = ['res']
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
