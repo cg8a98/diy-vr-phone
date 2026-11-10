@@ -1,0 +1,28 @@
+{
+    "name": "DiyVr.Tests.EditMode.Align",
+    "rootNamespace": "DiyVr.Tests",
+    "references": [
+        "DiyVr.Runtime",
+        "DiyVr.Room.Align",
+        "DiyVr.Room.RoomFrame",
+        "DiyVr.Room.ScanLoad",
+        "glTFast",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

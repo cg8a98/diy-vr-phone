@@ -1,0 +1,22 @@
+{
+    "name": "DiyVr.Room.Align",
+    "rootNamespace": "DiyVr.Room",
+    "references": [
+        "DiyVr.Runtime",
+        "DiyVr.Room.ScanLoad",
+        "glTFast",
+        "DiyVr.Room.RoomFrame",
+        "DiyVr.Passthrough",
+        "DiyVr.Updater",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

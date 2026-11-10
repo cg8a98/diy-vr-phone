@@ -54,7 +54,10 @@ namespace DiyVr.App
 
             // The update prompt owns A (install) and B (later) while it is showing; hide them from the mapper,
             // and keep hiding them until released so closing the prompt does not also place a cube / close the lens tool.
-            bool prompt = UpdatePrompt.IsOpen;
+            // Scan align mode (ticket 3.3) owns the whole controller while it is open: hide every button.
+            bool modal = global::DiyVr.Core.ControllerModal.IsOpen;
+            if (modal) b = default(GamepadButtons);
+            bool prompt = UpdatePrompt.IsOpen || modal;
             if (_maskAB && !prompt && !b.A && !b.B) _maskAB = false;
             if (prompt || _maskAB) { _maskAB = true; b.A = false; b.B = false; }
 
