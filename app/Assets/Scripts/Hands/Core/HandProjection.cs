@@ -32,6 +32,13 @@ namespace DiyVr.Hands
         /// <summary>World pose of the AR camera when the frame was grabbed.</summary>
         public Vector3 CameraPosition;
         public Quaternion CameraRotation;
+        /// <summary>When the camera exposed this frame, on the HandClock clock (acquire time when the camera gave no usable stamp).</summary>
+        public double CaptureSeconds;
+        /// <summary>Camera frame age when it was picked up, in ms; only meaningful when <see cref="AgeKnown"/>.</summary>
+        public double AgeMs;
+        public bool AgeKnown;
+        /// <summary>Time the CPU image conversion took, in ms.</summary>
+        public double ConvertMs;
 
         public Vector3 ToWorld(Vector3 cameraLocal) { return CameraPosition + CameraRotation * cameraLocal; }
     }

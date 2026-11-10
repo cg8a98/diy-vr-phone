@@ -21,12 +21,14 @@ namespace DiyVr.Hands
     /// Main thread each frame: if no inference is running, grab the latest CPU image, convert it to RGBA32 at a
     /// reduced size straight into a reusable buffer, dispose the XRCpuImage, and wake the worker. The worker thread
     /// runs HandLandmarker in VIDEO mode (GPU delegate, CPU as fallback), so the main thread never waits on inference. At most one
-    /// inference is in flight; frames that arrive meanwhile are simply not acquired.
+    /// inference is in flight; frames that arrive meanwhile are simply not acquired, so the next one is always the newest
+    /// camera frame (stale frames are dropped, never queued), and a camera frame is never processed twice.
     ///
     /// If anything fails to start (model missing, native library missing, no camera) the service writes the reason to
     /// <see cref="Status"/> and <see cref="HandsStatus"/>, then disables itself. Camera and hand data stay in memory
     /// on the phone; nothing is saved or sent.
     /// </summary>
+    [DefaultExecutionOrder(-100)] // publish results before HandViewManager (-50) and the views draw, so no frame is lost
     public sealed class HandTrackingService : MonoBehaviour
     {
         public const string ModelFileName = "hand_landmarker.task";
@@ -44,6 +46,8 @@ namespace DiyVr.Hands
         private static readonly IReadOnlyList<HandPose> NoHands = new HandPose[0];
 
         private readonly RollingAverage _inferenceMs = new RollingAverage(20);
+        private readonly RollingAverage _ageMs = new RollingAverage(20);
+        private readonly RollingAverage _convertMs = new RollingAverage(20);
         private readonly RateMeter _rate = new RateMeter(16);
         private readonly object _lock = new object();
         private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
@@ -55,6 +59,7 @@ namespace DiyVr.Hands
         private volatile bool _quit;
         private int _busy; // 1 while the worker owns the buffer; touched with Interlocked
         private long _lastTimestampMs = -1;
+        private double _lastImageStamp = -1; // camera stamp of the last frame handed to the worker
         private string _delegate = string.Empty;
         private bool _forceCpu;
 
@@ -215,6 +220,12 @@ namespace DiyVr.Hands
 
             try
             {
+                // Same camera image as last time: the next one has not arrived yet. Wait for it instead of
+                // spending an inference on a duplicate (which would also delay the real next frame).
+                double stamp = image.timestamp;
+                if (!HandLatency.IsNewFrame(_lastImageStamp, stamp)) return;
+                double acquiredAt = HandClock.Now();
+
                 HandImageSize.Choose(image.width, image.height, maxImageWidth, out int w, out int h);
                 if (w == 0) return;
 
@@ -233,8 +244,17 @@ namespace DiyVr.Hands
                     outputFormat = TextureFormat.RGBA32,
                     transformation = XRCpuImage.Transformation.None,
                 };
+                long c0 = System.Diagnostics.Stopwatch.GetTimestamp();
                 image.Convert(conversion, _buffer);
+                double convertMs = (System.Diagnostics.Stopwatch.GetTimestamp() - c0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                _lastImageStamp = stamp;
                 CaptureFrameInfo(w, h);
+
+                double age = HandLatency.AgeSeconds(stamp, acquiredAt);
+                _inFlightFrame.AgeKnown = age >= 0.0;
+                _inFlightFrame.AgeMs = age * 1000.0;
+                _inFlightFrame.CaptureSeconds = age >= 0.0 ? stamp : acquiredAt;
+                _inFlightFrame.ConvertMs = convertMs;
             }
             catch (Exception e)
             {
@@ -390,6 +410,8 @@ namespace DiyVr.Hands
                 ResultVersion++;
                 HandCount = hands.Count;
                 _inferenceMs.Add(ms);
+                _convertMs.Add(frame.ConvertMs);
+                if (frame.AgeKnown) _ageMs.Add(frame.AgeMs);
                 _rate.Tick(now);
             }
             InferenceMs = _inferenceMs.Average;
@@ -400,6 +422,8 @@ namespace DiyVr.Hands
             HandsStatus.LandmarkFps = LandmarkFps;
             HandsStatus.InferenceMs = InferenceMs;
             HandsStatus.Delegate = _delegate;
+            HandsStatus.LagConvertMs = _convertMs.Average;
+            HandsStatus.LagAgeMs = _ageMs.Count > 0 ? _ageMs.Average : -1;
         }
 
         private static void ClearGpuPending(bool ok)
@@ -429,6 +453,7 @@ namespace DiyVr.Hands
             if (_wake != null) { _wake.Dispose(); _wake = null; }
             Volatile.Write(ref _busy, 0);
             _hasPending = false;
+            _lastImageStamp = -1;
             LatestHands = NoHands;
             HandCount = 0;
         }

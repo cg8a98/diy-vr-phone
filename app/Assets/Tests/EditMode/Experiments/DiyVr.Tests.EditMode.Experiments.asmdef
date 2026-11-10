@@ -4,6 +4,7 @@
     "references": [
         "DiyVr.Experiments.FiveButton",
         "DiyVr.Interaction",
+        "DiyVr.Gestures",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

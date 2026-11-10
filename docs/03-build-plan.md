@@ -107,6 +107,21 @@ The order of milestones 4–6 can change. Carlos's baseline test (Playbook 2.2) 
 
 Hand images never leave the phone. Hand tracking runs at the camera's 30 fps at most, and its rate is one of the thermal governor's levers later (Milestone 7).
 
+**Milestone 3 tickets** (planned 2026-11-10, started early while Milestone 2 waits on owner tests)
+
+| Ticket | Goal | Acceptance criteria | Tier | Depends on |
+|---|---|---|---|---|
+| 3.1 Scan load | Import a Scaniverse .glb from the phone's Downloads folder into the app's private storage and show it in the stereo view (glTFast; textures downscaled to 2K max) | The bedroom scan appears at full size and the app stays at 60 fps; the file never leaves the phone; licence recorded in decisions.md | Fable | M2 |
+| 3.2 Marker room frame | Two printed markers (ARCore augmented images). A one-time "calibrate" step saves a room frame relative to the markers; every app start recovers that frame from the markers plus the ARCore floor | A test object placed in the room frame comes back in the same real spot after 5 restarts | Fable | M1 |
+| 3.3 Align scan | Put the loaded scan in the room frame; one-time manual nudge with the controller; save the result on the phone | The scan lines up with the real walls after a restart without nudging again | Fable | 3.1, 3.2 |
+| 3.4 Accuracy check | Measure 5 tape-measured reference points against the aligned scan (values stay on the phone, never in git) | Feature-table row 5: within 3 cm, 5 starts in a row | Fable | 3.3 |
+| 3.5 Colliders and boundary | Colliders from the scan; play boundary from the floor area, shown when you walk near a wall | Boundary appears before you reach a wall; gaze and placing work on scan surfaces | Fable | 3.3 |
+| 3.6 Live depth warnings | ARCore Depth API warns about things that are not in the scan (a chair, a person) closer than about 1 m | Feature-table row 6 | Fable | 3.5 |
+| 3.7 Passthrough peek | One quick action shows the camera view over the scan and back | Works in under half a second, no tracking loss | Sonnet | 3.3 |
+| 3.8 Re-skin my apartment | Very simple proof of concept: themed walls on the aligned scan and a few collectibles on free floor | You can walk the real room and pick up the collectibles | Fable | 3.5 |
+
+Tiers say Fable while the Fable promotion lasts (until 2026-11-16); afterwards Sonnet, with Opus for escalations.
+
 Later milestones get their ticket lists when they start.
 
 ## 4. Operating model

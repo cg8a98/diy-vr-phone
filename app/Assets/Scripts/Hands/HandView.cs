@@ -11,8 +11,8 @@ namespace DiyVr.Hands
     /// so a skeleton with the same (zero) disparity sits exactly on the hand and is as sharp as the image.
     /// Camera view OFF: the world-space 3D skeleton (default layer, both eyes, real depth).
     /// The 3D positions are still computed either way (HandProjection) for pinch, gaze and placement.
-    /// Gets a new pose about 15 times a second; every frame the drawn points chase the newest target, nudged a
-    /// short way ahead along the last velocity, so the motion looks continuous and lags less.
+    /// Gets a new pose 20-30 times a second; every frame the drawn points chase the newest target, nudged ahead
+    /// along the last velocity by part of the result's measured age, so the motion looks continuous and lags less.
     /// Hidden when no result has included this hand for <see cref="HideAfterSeconds"/>.
     /// Positions only live in memory; nothing is saved or sent.
     /// </summary>
@@ -21,7 +21,7 @@ namespace DiyVr.Hands
         public const float HideAfterSeconds = 0.2f;
         public const float JointDiameter = 0.008f;
         public const float BoneWidth = 0.004f;
-        private const float ChaseSeconds = 0.02f;
+        private const float ChaseSeconds = 0.015f;
 
         private sealed class EyeSkeleton
         {
@@ -47,7 +47,8 @@ namespace DiyVr.Hands
         private PassthroughController _passthrough;
         private HandIntrinsics _k;
         private float _lastSeen = float.NegativeInfinity;
-        private float _interval;
+        private float _interval; // seconds between the camera frames behind the last two results
+        private double _capture; // HandClock time the newest result's camera frame was exposed
         private bool _visible;
         private bool _hasPrev;
         private bool _worldShown, _passShown;
@@ -113,8 +114,9 @@ namespace DiyVr.Hands
             // Keep the previous result as the velocity reference (only meaningful when it is recent).
             System.Array.Copy(_target, _prevTarget, _target.Length);
             System.Array.Copy(_uv, _prevUv, _uv.Length);
-            _interval = now - _lastSeen;
+            _interval = continuing ? (float)(frame.CaptureSeconds - _capture) : 0f;
             _hasPrev = continuing;
+            _capture = frame.CaptureSeconds;
 
             _k = frame.Intrinsics;
             for (int i = 0; i < _target.Length; i++)
@@ -150,7 +152,9 @@ namespace DiyVr.Hands
                 && _rig.LeftEye != null && _rig.RightEye != null;
 
             float dt = Time.unscaledDeltaTime;
-            float since = now - _lastSeen;
+            // The result describes the camera frame from ageNow seconds ago; look ahead along the velocity by a
+            // modest share of that (HandLatency.LeadSeconds), never more than one frame interval (Predict).
+            float since = HandLatency.LeadSeconds(HandClock.Now() - _capture);
             float interval = _hasPrev ? _interval : 0f;
 
             // The 3D chase always runs (cheap) so the world points are right the moment the camera view turns off.
