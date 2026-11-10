@@ -3,6 +3,7 @@
     "rootNamespace": "DiyVr.Tests",
     "references": [
         "DiyVr.Experiments.FiveButton",
+        "DiyVr.Interaction",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

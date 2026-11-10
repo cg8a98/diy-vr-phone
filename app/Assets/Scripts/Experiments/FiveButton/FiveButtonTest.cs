@@ -80,7 +80,8 @@ namespace DiyVr.Experiments
             }
         }
 
-        private void Build(Transform head)
+        /// <summary>Builds the five buttons and the label in front of <paramref name="head"/>. Public so an EditMode test can run it.</summary>
+        public void Build(Transform head)
         {
             if (_root != null) Destroy(_root);
             _root = new GameObject("FiveButtonTest Buttons");
@@ -121,7 +122,8 @@ namespace DiyVr.Experiments
             labelGo.transform.position = mid + Vector3.up * FiveButtonLayout.LabelHeightAboveEye;
             labelGo.transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
             _label = labelGo.AddComponent<TextMesh>();
-            ConfigureText(_label, labelGo.AddComponent<MeshRenderer>(), 1f);
+            // TextMesh requires a MeshRenderer and adds one itself; AddComponent<MeshRenderer>() would return null.
+            ConfigureText(_label, labelGo.GetComponent<MeshRenderer>(), 1f);
         }
 
         private static TextMesh MakeText(Transform parent, string text, float size)
@@ -129,7 +131,7 @@ namespace DiyVr.Experiments
             var go = new GameObject("Text");
             go.transform.SetParent(parent, false);
             var tm = go.AddComponent<TextMesh>();
-            ConfigureText(tm, go.AddComponent<MeshRenderer>(), size);
+            ConfigureText(tm, go.GetComponent<MeshRenderer>(), size);
             tm.text = text;
             return tm;
         }
@@ -225,8 +227,20 @@ namespace DiyVr.Experiments
                 _materials[i].color = c;
             }
             bool pinchShown = now < _pinchShownUntil;
-            _label.text = (pinchShown ? "PINCH\n" : "\n") + _trial.Summary();
+            _label.text = (pinchShown ? "PINCH" : PinchRatioText()) + "\n" + _trial.Summary();
             _label.color = flashing && _flashMiss ? WrongColor : (pinchShown ? TargetColor : Color.white);
+        }
+
+        // Smallest thumb-index ratio of the tracked hands, so the owner can see how close a pinch gets (starts below 0.25).
+        private string PinchRatioText()
+        {
+            float best = float.NaN;
+            for (int i = 0; i < _detectors.Length; i++)
+            {
+                float r = _detectors[i].LastRatio;
+                if (!float.IsNaN(r) && (float.IsNaN(best) || r < best)) best = r;
+            }
+            return float.IsNaN(best) ? "no hand" : "pinch " + best.ToString("0.00");
         }
 
         private void OnDestroy()
