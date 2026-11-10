@@ -39,6 +39,7 @@ namespace DiyVr.Hands
         public const float MinDetectionConfidence = 0.35f;
         public const float MinPresenceConfidence = 0.35f;
         public const float MinTrackingConfidence = 0.35f;
+        public const float StartDelaySeconds = 3f;
 
         private static readonly IReadOnlyList<HandPose> NoHands = new HandPose[0];
 
@@ -115,6 +116,9 @@ namespace DiyVr.Hands
 
         private IEnumerator Init()
         {
+            // 0. Let the update check (UpdateChecker sends it at launch) go out before anything risky runs.
+            yield return new WaitForSecondsRealtime(StartDelaySeconds);
+
             // 1. Model bytes from StreamingAssets (inside the APK on Android, so UnityWebRequest reads it).
             string path = System.IO.Path.Combine(Application.streamingAssetsPath, ModelFileName);
             if (!path.Contains("://")) path = "file://" + path;
@@ -134,7 +138,14 @@ namespace DiyVr.Hands
             //    DllNotFoundException here means the native libraries are not in the build.
             string delegateName = null;
             Exception lastError = null;
-            var order = _forceCpu
+            // Crash guard: a native GPU crash cannot be caught. Flag the try first; clear it after the first GPU result.
+            bool wasBlocked = PlayerPrefs.GetInt(HandGpuGuard.BlockedKey, 0) == 1;
+            bool nowBlocked;
+            bool tryGpu = HandGpuGuard.ShouldTryGpu(PlayerPrefs.GetInt(HandGpuGuard.PendingKey, 0) == 1, wasBlocked, out nowBlocked)
+                && !_forceCpu;
+            if (nowBlocked && !wasBlocked) { PlayerPrefs.SetInt(HandGpuGuard.BlockedKey, 1); PlayerPrefs.Save(); }
+            if (tryGpu) { PlayerPrefs.SetInt(HandGpuGuard.PendingKey, 1); PlayerPrefs.Save(); }
+            var order = !tryGpu
                 ? new[] { Mediapipe.Tasks.Core.BaseOptions.Delegate.CPU }
                 : new[] { Mediapipe.Tasks.Core.BaseOptions.Delegate.GPU, Mediapipe.Tasks.Core.BaseOptions.Delegate.CPU };
             foreach (var d in order)
@@ -162,7 +173,8 @@ namespace DiyVr.Hands
                 Fail("init failed: " + (lastError != null ? lastError.GetType().Name : "unknown"));
                 yield break;
             }
-            _delegate = delegateName;
+            _delegate = delegateName == "CPU" && nowBlocked ? "CPU (GPU blocked)" : delegateName;
+            if (tryGpu && delegateName != "GPU") ClearGpuPending(false); // creation threw: no crash, just no GPU
 
             // 3. The camera.
             for (float waited = 0f; _camera == null && waited < 10f; waited += Time.unscaledDeltaTime)
@@ -356,6 +368,7 @@ namespace DiyVr.Hands
                 // The GPU delegate failed while running: rebuild on the CPU delegate instead of giving up.
                 Debug.LogWarning("Hand tracking GPU run failed, switching to CPU: " + error);
                 _forceCpu = true;
+                ClearGpuPending(false);
                 Shutdown();
                 Status = "starting";
                 HandsStatus.SetOff("switching to CPU");
@@ -371,6 +384,7 @@ namespace DiyVr.Hands
             double now = Time.unscaledTimeAsDouble;
             if (hands != null)
             {
+                if (_delegate == "GPU" && PlayerPrefs.GetInt(HandGpuGuard.PendingKey, 0) == 1) ClearGpuPending(true);
                 LatestHands = hands;
                 LatestFrame = frame;
                 ResultVersion++;
@@ -386,6 +400,13 @@ namespace DiyVr.Hands
             HandsStatus.LandmarkFps = LandmarkFps;
             HandsStatus.InferenceMs = InferenceMs;
             HandsStatus.Delegate = _delegate;
+        }
+
+        private static void ClearGpuPending(bool ok)
+        {
+            PlayerPrefs.SetInt(HandGpuGuard.PendingKey, 0);
+            if (ok) PlayerPrefs.SetInt(HandGpuGuard.OkKey, 1);
+            PlayerPrefs.Save();
         }
 
         private void Shutdown()
