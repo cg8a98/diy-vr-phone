@@ -181,7 +181,9 @@ namespace DiyVr.Experiments.PlaceObjects
             int version = _hands.ResultVersion;
             if (version == _lastVersion)
             {
-                for (int i = 0; i < _detectors.Length; i++) _detectors[i].UpdateLost(now);
+                // No new result this app frame: only time out a held pinch. UpdateLost here would cancel the debounce
+                // every frame between results, so a pinch could never start (bug in v0.1.92-0.1.114).
+                for (int i = 0; i < _detectors.Length; i++) _detectors[i].Tick(now);
                 return;
             }
             _lastVersion = version;

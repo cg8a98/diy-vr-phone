@@ -230,5 +230,44 @@ namespace DiyVr.Tests
             _d.Update(new Vector3(1f, 2f, 3f), new Vector3(1f, 2f, 3f + 0.01f), Scale, 0.06f);
             Assert.IsTrue(_d.IsPinching);
         }
+
+        // Regression for v0.1.92-0.1.114: the app runs at 60 fps but results arrive at ~25 fps. The consumers called
+        // UpdateLost on every app frame without a new result, which cancelled the debounce, so a pinch never started.
+        // Simulate that real loop: a result every 40 ms, Tick on the frames in between.
+        [Test]
+        public void PinchStarts_WhenResultsArriveSlowerThanAppFrames()
+        {
+            float t = 0f;
+            for (int frame = 0; frame < 30 && !_d.IsPinching; frame++)
+            {
+                t = frame / 60f;
+                if (frame % 2 == 0 || frame % 5 == 0) Feed(0.1f, t); // roughly 25-30 results per second
+                else _d.Tick(t);
+            }
+            Assert.IsTrue(_d.IsPinching, "pinch should start within half a second");
+            Assert.AreEqual(1, _started);
+        }
+
+        [Test]
+        public void Tick_EndsHeldPinch_AfterLostTimeout()
+        {
+            StartPinch();
+            _d.Tick(0.06f + _d.LostTimeoutSeconds * 0.5f);
+            Assert.IsTrue(_d.IsPinching);
+            _d.Tick(0.06f + _d.LostTimeoutSeconds + 0.01f);
+            Assert.IsFalse(_d.IsPinching);
+            Assert.AreEqual(1, _ended);
+        }
+
+        [Test]
+        public void UpdateLostBetweenResults_StillBlocksPinch_DocumentsWhyTickExists()
+        {
+            for (int frame = 0; frame < 30; frame++)
+            {
+                float t = frame / 60f;
+                if (frame % 2 == 0) Feed(0.1f, t); else _d.UpdateLost(t);
+            }
+            Assert.IsFalse(_d.IsPinching);
+        }
     }
 }
