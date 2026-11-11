@@ -17,7 +17,7 @@ namespace DiyVr.Hands
 
     /// <summary>
     /// Finds the HandTrackingService (it may be created after this runs), makes two HandViews and hands each new result
-    /// to them. Slots follow MediaPipe's Left/Right label when the two hands differ, otherwise result order.
+    /// to them. Each hand keeps its view by position (HandTrackingService.LatestSlots); the Left/Right label only places new hands.
     /// </summary>
     [DefaultExecutionOrder(-50)] // after HandTrackingService (-100) has published, before the views draw
     public sealed class HandViewManager : MonoBehaviour
@@ -56,12 +56,11 @@ namespace DiyVr.Hands
             HandFrameInfo frame = _service.LatestFrame;
             if (_probe != null) _probe.NewResult(frame.CaptureSeconds);
             float now = Time.unscaledTime;
-            bool bySide = hands.Count == 2 && hands[0].Side != hands[1].Side
-                && hands[0].Side != HandSide.Unknown && hands[1].Side != HandSide.Unknown;
-            for (int i = 0; i < hands.Count && i < 2; i++)
+            var slots = _service.LatestSlots;
+            for (int i = 0; i < hands.Count && i < slots.Count; i++)
             {
-                int slot = bySide ? (hands[i].Side == HandSide.Left ? 0 : 1) : i;
-                if (hands.Count == 1 && hands[0].Side == HandSide.Right) slot = 1;
+                int slot = slots[i];
+                if (slot < 0 || slot >= _views.Length) continue;
                 _views[slot].Apply(hands[i], frame, now);
             }
         }
