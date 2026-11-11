@@ -15,12 +15,13 @@ Last release the owner tested: v0.1.92. Newest: v0.1.102 (updater fix, five-butt
 | 2.6 place objects | #72 | Merged. Gaze + pinch places 8 cm cube on AR planes, D-pad DOWN clears |
 | 2.2c hand lag | #73 | Merged. Overlay "Lag = cam + cv + inf + post", duplicate frames skipped, look-ahead |
 | 1.24 updater | #63 #70 | Merged. #70 fixed missing install permission (androidlib needs sourceSets); CI now checks the APK manifest |
-| 3.1 scan load | #75 | Green, waiting on owner merge. glTFast 6.14.1, START = file picker, hold START = hide/show |
-| 3.2 marker room frame | #76 | Green, waiting on owner merge. 150 mm printed markers in hardware/room-markers, D-pad LEFT/RIGHT |
-| 3.3 align scan | - | Next, needs #75 and #76 merged |
+| 3.1 scan load | #75 | Merged (v0.1.110). glTFast 6.14.1, START = file picker, hold START = hide/show |
+| 3.2 marker room frame | #76 | Merged (v0.1.110). 150 mm printed markers in hardware/room-markers, D-pad LEFT/RIGHT |
+| 3.3 align scan | #78 | Merged. Saved per scan in scan-align.json; ControllerModal.IsOpen masks GamepadControls while aligning |
+| 3.4 accuracy check | - | Next; needs the owner's tape measurements (kept on the phone, never in git) |
 
 ## Controller map (Xbox)
-A/B/X/Y, shoulders, select: lens tool and prompts. Left stick click: five-button test. Right stick click: plane patches. D-pad UP: lens tool. D-pad DOWN: clear placed cubes. D-pad LEFT: room frame show/hide (hold = recalibrate). D-pad RIGHT: drop room test cube. START: load scan (hold = hide/show).
+A/B/X/Y, shoulders, select: lens tool and prompts. Left stick click: five-button test. Right stick click: plane patches. D-pad UP: lens tool (inside it); hold 1 s with the lens tool closed = scan align mode (sticks move/turn, triggers up/down, shoulder = fine, A save, B cancel). D-pad DOWN: clear placed cubes. D-pad LEFT: room frame show/hide (hold = recalibrate). D-pad RIGHT: drop room test cube. START: load scan (hold = hide/show).
 
 ## Gotchas
 - Unity can't be opened in the cloud container; CI (GameCI) is the compiler. Every new file needs a .meta.
@@ -36,6 +37,6 @@ A/B/X/Y, shoulders, select: lens tool and prompts. Left stick click: five-button
 None.
 
 ## Next steps (in order)
-1. Owner merges #75 and #76, installs the newest release by hand once, runs the test backlog.
-2. PM starts 3.3 align scan once #75 and #76 are merged.
+1. Owner installs the newest release by hand once and runs the test backlog (7 tests).
+2. PM plans 3.4 with the owner's reference-point measurements; 3.5 colliders and boundary after the align test passes.
 3. Tune pinch thresholds and hand lag from the owner's numbers.
