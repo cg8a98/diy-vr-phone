@@ -165,8 +165,9 @@ namespace DiyVr.Experiments
             int version = _hands.ResultVersion;
             if (version == _lastVersion)
             {
-                // No new result: let a held pinch time out if tracking has stopped (UpdateLost keeps it until the timeout).
-                for (int i = 0; i < _detectors.Length; i++) _detectors[i].UpdateLost(now);
+                // No new result this app frame: only time out a held pinch. UpdateLost here would cancel the debounce
+                // every frame between results, so a pinch could never start (bug in v0.1.92-0.1.114).
+                for (int i = 0; i < _detectors.Length; i++) _detectors[i].Tick(now);
                 return;
             }
             _lastVersion = version;

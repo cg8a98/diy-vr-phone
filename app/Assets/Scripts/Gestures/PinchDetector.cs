@@ -67,7 +67,20 @@ namespace DiyVr.Gestures
                 SetPinching(!IsPinching);
         }
 
-        /// <summary>Call when the hand is not tracked this frame. Ends a pinch after LostTimeoutSeconds without data.</summary>
+        /// <summary>
+        /// Call on app frames where no new tracking result arrived (tracking runs at ~25 fps, the app at 60).
+        /// Only ends an active pinch after LostTimeoutSeconds without data; unlike <see cref="UpdateLost"/> it keeps a
+        /// pending (debouncing) change, so a pinch can still start on the next result.
+        /// </summary>
+        public void Tick(float time)
+        {
+            if (!IsFinite(time))
+                return;
+            if (IsPinching && time - _lastDataTime >= LostTimeoutSeconds)
+                SetPinching(false);
+        }
+
+        /// <summary>Call when a new tracking result arrived without this hand in it. Ends a pinch after LostTimeoutSeconds without data.</summary>
         public void UpdateLost(float time)
         {
             if (!IsFinite(time))
