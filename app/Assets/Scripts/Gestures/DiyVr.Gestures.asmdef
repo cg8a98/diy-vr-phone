@@ -1,7 +1,9 @@
 {
     "name": "DiyVr.Gestures",
     "rootNamespace": "DiyVr.Gestures",
-    "references": [],
+    "references": [
+        "DiyVr.Hands.Core"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

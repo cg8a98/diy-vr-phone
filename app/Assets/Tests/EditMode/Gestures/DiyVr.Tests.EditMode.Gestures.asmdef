@@ -3,6 +3,7 @@
     "rootNamespace": "DiyVr.Tests",
     "references": [
         "DiyVr.Gestures",
+        "DiyVr.Hands.Core",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -175,11 +175,13 @@ namespace DiyVr.Experiments
             var frame = _hands.LatestFrame;
             float aspect = frame.Intrinsics.IsValid ? frame.Intrinsics.Width / frame.Intrinsics.Height : 1f;
             IReadOnlyList<HandPose> hands = _hands.LatestHands;
+            // Detector per hand from the stable hand slots, not the Left/Right label (which flips now and then).
+            int[] slots = PinchSlots.Assign(hands, _hands.LatestSlots);
             bool[] seen = new bool[_detectors.Length];
 
-            for (int h = 0; h < hands.Count && h < _detectors.Length; h++)
+            for (int h = 0; h < slots.Length; h++)
             {
-                int slot = SlotFor(hands[h], h, seen);
+                int slot = slots[h];
                 Vector3 thumb, index; float scale;
                 if (!PinchLandmarks.TryGet(hands[h].Landmarks, aspect, out thumb, out index, out scale)) continue;
                 seen[slot] = true;
@@ -190,13 +192,6 @@ namespace DiyVr.Experiments
             }
             for (int i = 0; i < _detectors.Length; i++)
                 if (!seen[i]) _detectors[i].UpdateLost(now);
-        }
-
-        private static int SlotFor(HandPose pose, int index, bool[] taken)
-        {
-            int slot = pose.Side == HandSide.Right ? 1 : pose.Side == HandSide.Left ? 0 : index;
-            if (taken[slot]) slot = 1 - slot;
-            return slot;
         }
 
         private void OnPinch()
