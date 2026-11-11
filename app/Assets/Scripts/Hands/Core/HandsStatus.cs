@@ -17,6 +17,8 @@ namespace DiyVr.Hands
         public static double LagTotalMs;
         public static double LagAgeMs = -1;
         public static double LagConvertMs;
+        /// <summary>Extra overlay line(s) that split the camera age (see CameraAgeProbe). Empty = none.</summary>
+        public static string CameraAgeLines = string.Empty;
         /// <summary>Why hand tracking is off.</summary>
         public static string Reason = "not started";
         /// <summary>"GPU" or "CPU": what the landmarker runs on. Empty until known.</summary>
@@ -28,6 +30,8 @@ namespace DiyVr.Hands
             string line = Format(Active, HandCount, LandmarkFps, InferenceMs, Reason, Delegate);
             if (Active && LagTotalMs > 0)
                 line += "\n" + HandLatency.FormatLag(LagTotalMs, LagAgeMs, LagConvertMs, InferenceMs);
+            if (Active && !string.IsNullOrEmpty(CameraAgeLines))
+                line += "\n" + CameraAgeLines;
             return line;
         }
 
@@ -56,6 +60,7 @@ namespace DiyVr.Hands
             LagTotalMs = 0;
             LagAgeMs = -1;
             LagConvertMs = 0;
+            CameraAgeLines = string.Empty;
             Reason = reason;
             Delegate = string.Empty;
         }

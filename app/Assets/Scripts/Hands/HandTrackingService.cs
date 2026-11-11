@@ -51,6 +51,8 @@ namespace DiyVr.Hands
         private readonly RollingAverage _ageMs = new RollingAverage(20);
         private readonly RollingAverage _convertMs = new RollingAverage(20);
         private readonly RateMeter _rate = new RateMeter(16);
+        private readonly CameraAgeProbe _camProbe = new CameraAgeProbe(); // 2.2e diagnostics: what the camera age is made of
+        private bool _subscribed, _modesRead, _busyAtUpdate;
         private readonly object _lock = new object();
         private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
 
@@ -201,6 +203,11 @@ namespace DiyVr.Hands
                 yield break;
             }
 
+            _camProbe.Reset();
+            _modesRead = false;
+            _camera.frameReceived += OnCameraFrame;
+            _subscribed = true;
+
             _quit = false;
             _wake = new SemaphoreSlim(0);
             _worker = new Thread(WorkerLoop) { IsBackground = true, Name = "HandLandmarker" };
@@ -218,7 +225,59 @@ namespace DiyVr.Hands
             if (!_ready) return;
 
             PublishResults();
+            if (!_ready) return; // PublishResults can stop or restart the service
+            _busyAtUpdate = Volatile.Read(ref _busy) != 0;
+            if (!_busyAtUpdate) TryStartFrame();
+        }
+
+        // Second chance in the same frame: if the worker finished between Update and now, hand it the next camera
+        // frame straight away instead of leaving it idle until the next Update (up to one screen refresh later).
+        private void LateUpdate()
+        {
+            if (!_ready || !_busyAtUpdate) return;
+            _busyAtUpdate = false;
             if (Volatile.Read(ref _busy) == 0) TryStartFrame();
+        }
+
+        // Diagnostics only (2.2e). Raised by ARCameraManager on the main thread, every app frame; the stamp only
+        // changes when the camera has delivered a new picture.
+        private void OnCameraFrame(ARCameraFrameEventArgs e)
+        {
+            if (!_ready) return;
+            if (!_modesRead) ReadCameraModes();
+            double stamp = e.timestampNs.HasValue ? e.timestampNs.Value * 1e-9 : 0.0;
+            double exposure = e.exposureDuration.HasValue ? e.exposureDuration.Value : -1.0;
+            _camProbe.OnCameraFrame(stamp, HandClock.Now(), exposure);
+        }
+
+        // Highest frame rate among ARCore's camera modes on this phone, for the overlay (the mode itself is chosen
+        // elsewhere, in HeadPoseDriver).
+        private void ReadCameraModes()
+        {
+            _modesRead = true;
+            NativeArray<XRCameraConfiguration> configs = default(NativeArray<XRCameraConfiguration>);
+            try
+            {
+                configs = _camera.GetConfigurations(Allocator.Temp);
+                int max = 0;
+                if (configs.IsCreated)
+                {
+                    for (int i = 0; i < configs.Length; i++)
+                    {
+                        object fps = configs[i].framerate; // int? in AR Foundation; boxing keeps this compile-safe
+                        if (fps is int && (int)fps > max) max = (int)fps;
+                    }
+                }
+                _camProbe.SetMaxModeFps(max);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("Camera mode list failed: " + e.Message);
+            }
+            finally
+            {
+                if (configs.IsCreated) configs.Dispose();
+            }
         }
 
         private void TryStartFrame()
@@ -233,6 +292,7 @@ namespace DiyVr.Hands
                 double stamp = image.timestamp;
                 if (!HandLatency.IsNewFrame(_lastImageStamp, stamp)) return;
                 double acquiredAt = HandClock.Now();
+                _camProbe.OnAcquire(stamp, acquiredAt, HandClock.NowMonotonic());
 
                 HandImageSize.Choose(image.width, image.height, maxImageWidth, out int w, out int h);
                 if (w == 0) return;
@@ -434,6 +494,7 @@ namespace DiyVr.Hands
             HandsStatus.Delegate = _delegate;
             HandsStatus.LagConvertMs = _convertMs.Average;
             HandsStatus.LagAgeMs = _ageMs.Count > 0 ? _ageMs.Average : -1;
+            if (hands != null) HandsStatus.CameraAgeLines = _camProbe.Lines(); // rebuilt per result, not per frame
         }
 
         private static void ClearGpuPending(bool ok)
@@ -446,6 +507,11 @@ namespace DiyVr.Hands
         private void Shutdown()
         {
             _ready = false;
+            if (_subscribed)
+            {
+                if (_camera != null) _camera.frameReceived -= OnCameraFrame;
+                _subscribed = false;
+            }
             if (_worker != null)
             {
                 _quit = true;
