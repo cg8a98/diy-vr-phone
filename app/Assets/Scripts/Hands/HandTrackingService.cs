@@ -44,6 +44,8 @@ namespace DiyVr.Hands
         public const float StartDelaySeconds = 3f;
 
         private static readonly IReadOnlyList<HandPose> NoHands = new HandPose[0];
+        private static readonly IReadOnlyList<int> NoSlots = new int[0];
+        private readonly HandIdentity _identity = new HandIdentity();
 
         private readonly RollingAverage _inferenceMs = new RollingAverage(20);
         private readonly RollingAverage _ageMs = new RollingAverage(20);
@@ -93,6 +95,12 @@ namespace DiyVr.Hands
 
         /// <summary>Intrinsics and AR camera world pose captured when the frame behind <see cref="LatestHands"/> was grabbed.</summary>
         public HandFrameInfo LatestFrame { get; private set; }
+
+        /// <summary>
+        /// Stable slot (0 or 1) for each hand in <see cref="LatestHands"/>, same order; -1 = no slot. A hand keeps its
+        /// slot while it stays in view even when MediaPipe's Left/Right label flips. Never null.
+        /// </summary>
+        public IReadOnlyList<int> LatestSlots { get; private set; } = NoSlots;
 
         /// <summary>Increases by one every time a new result (even "no hands") is published.</summary>
         public int ResultVersion { get; private set; }
@@ -313,7 +321,7 @@ namespace DiyVr.Hands
                     using (var image = new MpImage(MpImageFormat.Srgba, _bufW, _bufH, _bufW * 4, _buffer))
                     {
                         if (_landmarker.TryDetectForVideo(image, ts, null, ref result))
-                            hands = ToPoses(result);
+                            hands = HandDedupe.Suppress(ToPoses(result), _bufH > 0 ? (float)_bufW / _bufH : 1f);
                     }
                     double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
@@ -407,6 +415,8 @@ namespace DiyVr.Hands
                 if (_delegate == "GPU" && PlayerPrefs.GetInt(HandGpuGuard.PendingKey, 0) == 1) ClearGpuPending(true);
                 LatestHands = hands;
                 LatestFrame = frame;
+                float aspect = frame.Intrinsics.IsValid ? frame.Intrinsics.Width / frame.Intrinsics.Height : 1f;
+                LatestSlots = _identity.Assign(hands, aspect, now);
                 ResultVersion++;
                 HandCount = hands.Count;
                 _inferenceMs.Add(ms);
@@ -455,6 +465,8 @@ namespace DiyVr.Hands
             _hasPending = false;
             _lastImageStamp = -1;
             LatestHands = NoHands;
+            LatestSlots = NoSlots;
+            _identity.Reset();
             HandCount = 0;
         }
 
