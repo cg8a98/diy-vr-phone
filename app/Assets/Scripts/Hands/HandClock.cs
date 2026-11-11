@@ -11,7 +11,29 @@ namespace DiyVr.Hands
 #if UNITY_ANDROID && !UNITY_EDITOR
         private static AndroidJavaClass _systemClock;
         private static bool _failed;
+        private static AndroidJavaClass _javaSystem;
+        private static bool _monoFailed;
 #endif
+
+        /// <summary>
+        /// "Now" on Android's other clock (System.nanoTime, which stops while the phone sleeps). Only used to tell
+        /// which clock the camera stamps are on (ticket 2.2e diagnostics). Elsewhere it is Unity's real time.
+        /// </summary>
+        public static double NowMonotonic()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (!_monoFailed)
+            {
+                try
+                {
+                    if (_javaSystem == null) _javaSystem = new AndroidJavaClass("java.lang.System");
+                    return _javaSystem.CallStatic<long>("nanoTime") * 1e-9;
+                }
+                catch (System.Exception) { _monoFailed = true; }
+            }
+#endif
+            return Time.realtimeSinceStartupAsDouble;
+        }
 
         public static double Now()
         {
